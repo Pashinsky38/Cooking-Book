@@ -9,13 +9,17 @@ import android.widget.*;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.bumptech.glide.request.RequestOptions;
+
 import java.util.ArrayList;
 
 public class RecipeAdapter extends RecyclerView.Adapter<RecipeAdapter.ViewHolder> {
 
     private final Context context;
     private final ArrayList<Recipe> recipes;
-    private ArrayList<Recipe> filteredRecipes;
+    private final ArrayList<Recipe> filteredRecipes;
 
     public RecipeAdapter(Context ctx, ArrayList<Recipe> list) {
         this.context = ctx;
@@ -53,10 +57,25 @@ public class RecipeAdapter extends RecyclerView.Adapter<RecipeAdapter.ViewHolder
         holder.title.setText(r.getTitle());
         holder.description.setText(r.getDescription());
 
-        if (r.getImageUri() != null)
-            holder.image.setImageURI(Uri.parse(r.getImageUri()));
-        else
-            holder.image.setImageResource(R.drawable.placeholder); // add placeholder image
+        // Use Glide for optimized image loading
+        RequestOptions requestOptions = new RequestOptions()
+                .placeholder(R.drawable.placeholder)
+                .error(R.drawable.placeholder)
+                .override(400, 300) // Resize images to consistent size
+                .centerCrop()
+                .diskCacheStrategy(DiskCacheStrategy.ALL); // Cache both original and resized
+
+        if (r.getImageUri() != null && !r.getImageUri().isEmpty()) {
+            Glide.with(context)
+                    .load(Uri.parse(r.getImageUri()))
+                    .apply(requestOptions)
+                    .into(holder.image);
+        } else {
+            Glide.with(context)
+                    .load(R.drawable.placeholder)
+                    .apply(requestOptions)
+                    .into(holder.image);
+        }
 
         holder.editBtn.setOnClickListener(view -> {
             // Find the original position in the main recipes list
@@ -72,6 +91,13 @@ public class RecipeAdapter extends RecyclerView.Adapter<RecipeAdapter.ViewHolder
     @Override
     public int getItemCount() {
         return filteredRecipes.size();
+    }
+
+    @Override
+    public void onViewRecycled(@NonNull ViewHolder holder) {
+        super.onViewRecycled(holder);
+        // Clear Glide requests for recycled views
+        Glide.with(context).clear(holder.image);
     }
 
     // Method to filter recipes based on search query
