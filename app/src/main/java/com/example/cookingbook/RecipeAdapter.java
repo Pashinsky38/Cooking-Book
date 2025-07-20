@@ -20,6 +20,8 @@ public class RecipeAdapter extends RecyclerView.Adapter<RecipeAdapter.ViewHolder
     private final Context context;
     private final ArrayList<Recipe> recipes;
     private final ArrayList<Recipe> filteredRecipes;
+    private String currentSearchQuery = "";
+    private String currentCategory = "All";
 
     public RecipeAdapter(Context ctx, ArrayList<Recipe> list) {
         this.context = ctx;
@@ -103,22 +105,32 @@ public class RecipeAdapter extends RecyclerView.Adapter<RecipeAdapter.ViewHolder
 
     // Method to filter recipes based on search query
     public void filter(String query) {
+        currentSearchQuery = query;
+        applyFilters();
+    }
+
+    public void filterByCategory(String category) {
+        currentCategory = category;
+        applyFilters();
+    }
+
+    private void applyFilters() {
         ArrayList<Recipe> newFilteredRecipes = new ArrayList<>();
 
-        if (query.isEmpty()) {
-            newFilteredRecipes.addAll(recipes);
-        } else {
-            String lowerCaseQuery = query.toLowerCase().trim();
-            for (Recipe recipe : recipes) {
-                // Search in title and description
-                if ((recipe.getTitle() != null && recipe.getTitle().toLowerCase().contains(lowerCaseQuery)) ||
-                        (recipe.getDescription() != null && recipe.getDescription().toLowerCase().contains(lowerCaseQuery))) {
-                    newFilteredRecipes.add(recipe);
-                }
+        for (Recipe recipe : recipes) {
+            boolean matchesSearch = currentSearchQuery.isEmpty() ||
+                    (recipe.getTitle() != null && recipe.getTitle().toLowerCase().contains(currentSearchQuery.toLowerCase())) ||
+                    (recipe.getDescription() != null && recipe.getDescription().toLowerCase().contains(currentSearchQuery.toLowerCase()));
+
+            boolean matchesCategory = currentCategory.equals("All") ||
+                    (recipe.getCategory() != null && recipe.getCategory().equals(currentCategory));
+
+            if (matchesSearch && matchesCategory) {
+                newFilteredRecipes.add(recipe);
             }
         }
 
-        // Calculate differences and use specific notify methods
+        // Update filtered list with animation
         int oldSize = filteredRecipes.size();
         int newSize = newFilteredRecipes.size();
 
@@ -136,7 +148,6 @@ public class RecipeAdapter extends RecyclerView.Adapter<RecipeAdapter.ViewHolder
             }
             notifyItemRangeInserted(oldSize, newSize - oldSize);
         } else {
-            // Same size, just changed content
             notifyItemRangeChanged(0, newSize);
         }
     }

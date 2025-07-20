@@ -29,4 +29,5 @@
     <string name="share_subject_prefix">Recipe: </string>
     <string name="share_recipe_chooser">Share Recipe</string>
     <string name="share_error">Unable to share recipe</string>
+    <string name="category">Category</string>
 </resources>

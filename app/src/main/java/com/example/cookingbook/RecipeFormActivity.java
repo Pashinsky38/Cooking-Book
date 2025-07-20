@@ -16,6 +16,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import java.util.Arrays;
+
 public class RecipeFormActivity extends AppCompatActivity {
 
     private static final int IMAGE_PICK_CODE = 101;
@@ -25,6 +27,8 @@ public class RecipeFormActivity extends AppCompatActivity {
     private ImageView imageView;
     private Uri selectedImageUri;
     private int editingPosition = -1;
+    private Spinner categorySpinner;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,6 +41,24 @@ public class RecipeFormActivity extends AppCompatActivity {
         Button deleteBtn = findViewById(R.id.deleteBtn);
         Button chooseImg = findViewById(R.id.chooseImageBtn);
         Button saveBtn = findViewById(R.id.saveBtn);
+        categorySpinner = findViewById(R.id.categorySpinner);
+
+        String[] categories = {"Appetizers", "Main Course", "Desserts", "Beverages", "Salads", "Other"};
+        ArrayAdapter<String> categoryAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, categories);
+        categoryAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        categorySpinner.setAdapter(categoryAdapter);
+
+        // If editing, set the current category
+        if (editingPosition != -1) {
+            Recipe recipe = RecipeManager.recipes.get(editingPosition);
+            String currentCategory = recipe.getCategory();
+            if (currentCategory != null) {
+                int categoryPosition = Arrays.asList(categories).indexOf(currentCategory);
+                if (categoryPosition >= 0) {
+                    categorySpinner.setSelection(categoryPosition);
+                }
+            }
+        }
 
         if (getIntent().hasExtra("position")) {
             editingPosition = getIntent().getIntExtra("position", -1);
@@ -69,15 +91,16 @@ public class RecipeFormActivity extends AppCompatActivity {
             String title = titleInput.getText().toString();
             String desc = descInput.getText().toString();
             String img = selectedImageUri != null ? selectedImageUri.toString() : null;
+            String category = categorySpinner.getSelectedItem().toString();
 
-            Recipe r = new Recipe(title, desc, img);
+            Recipe r = new Recipe(title, desc, img, category);
 
             if (editingPosition == -1)
                 RecipeManager.recipes.add(r);
             else
                 RecipeManager.recipes.set(editingPosition, r);
 
-            RecipeManager.saveRecipes(this); // Save to storage
+            RecipeManager.saveRecipes(this);
             finish();
         });
 
