@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="com.obiscr.chatgpt.settings.EasyCodeState">
+    <option name="projectFiles" value="$PROJECT_DIR$/app/src/androidTest/java/com/example/cookingbook/ExampleInstrumentedTest.java;C:/Users/libby/AndroidStudioProjects/CookingBook2/app/src/main/java/com/example/cookingbook/MainActivity.java;C:/Users/libby/AndroidStudioProjects/CookingBook2/app/src/main/java/com/example/cookingbook/Recipe.java;C:/Users/libby/AndroidStudioProjects/CookingBook2/app/src/main/java/com/example/cookingbook/RecipeAdapter.java;C:/Users/libby/AndroidStudioProjects/CookingBook2/app/src/main/java/com/example/cookingbook/RecipeFormActivity.java;C:/Users/libby/AndroidStudioProjects/CookingBook2/app/src/main/java/com/example/cookingbook/RecipeManager.java;C:/Users/libby/AndroidStudioProjects/CookingBook2/app/src/test/java/com/example/cookingbook/ExampleUnitTest.java;C:/Users/libby/AndroidStudioProjects/CookingBook2/app/build.gradle.kts;C:/Users/libby/AndroidStudioProjects/CookingBook2/build.gradle.kts;C:/Users/libby/AndroidStudioProjects/CookingBook2/README.md;C:/Users/libby/AndroidStudioProjects/CookingBook2/settings.gradle.kts" />
+  </component>
+</project>

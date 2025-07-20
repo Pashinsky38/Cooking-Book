@@ -4,54 +4,45 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.widget.Button;
-import android.widget.EditText;
+import android.view.MotionEvent;
+
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
+import com.example.cookingbook.databinding.ActivityMainBinding;
 
 public class MainActivity extends AppCompatActivity {
 
     private RecipeAdapter adapter;
-    private RecyclerView recipeList;
-    private EditText searchInput;
+    private ActivityMainBinding binding;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        binding = ActivityMainBinding.inflate(getLayoutInflater());
+        setContentView(binding.getRoot());
 
         RecipeManager.loadRecipes(this); // Load saved recipes
 
-        initializeViews();
         setupRecyclerView();
         setupSearch();
         setupAddButton();
         setupFocusAndCursorManagement();
     }
 
-    private void initializeViews() {
-        searchInput = findViewById(R.id.searchInput);
-        recipeList = findViewById(R.id.recipeList);
-    }
-
     private void setupRecyclerView() {
-        recipeList.setLayoutManager(new LinearLayoutManager(this));
+        binding.recipeList.setLayoutManager(new LinearLayoutManager(this));
         adapter = new RecipeAdapter(this, RecipeManager.recipes);
-        recipeList.setAdapter(adapter);
+        binding.recipeList.setAdapter(adapter);
     }
-
-
 
     private void setupAddButton() {
-        Button addBtn = findViewById(R.id.addBtn);
-        addBtn.setOnClickListener(v -> startActivity(new Intent(MainActivity.this, RecipeFormActivity.class)));
+        binding.addBtn.setOnClickListener(v -> startActivity(new Intent(MainActivity.this, RecipeFormActivity.class)));
     }
 
     private void setupSearch() {
 
         // Add search functionality
-        searchInput.addTextChangedListener(new TextWatcher() {
+        binding.searchInput.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
                 // Not needed
@@ -70,19 +61,22 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setupFocusAndCursorManagement() {
-        // Handle focus changes to control cursor visibility
-        searchInput.setOnFocusChangeListener((v, hasFocus) -> searchInput.setCursorVisible(hasFocus));
-
-
         // Set cursor initially invisible
-        searchInput.setCursorVisible(false);
+        binding.searchInput.setCursorVisible(false);
 
-        // Handle clicks on RecyclerView to clear focus from search input
-        recipeList.setOnTouchListener((v, event) -> {
-            if (searchInput.hasFocus()) {
-                searchInput.clearFocus();
+        // Handle focus and touch events to manage cursor and focus efficiently
+        binding.searchInput.setOnFocusChangeListener((v, hasFocus) -> binding.searchInput.setCursorVisible(hasFocus));
+
+        binding.recipeList.setOnTouchListener((v, event) -> {
+            if (binding.searchInput.hasFocus()) {
+                binding.searchInput.clearFocus();
+                binding.searchInput.setCursorVisible(false);
             }
-            return false; // Don't consume the touch event
+            // Accessibility: call performClick for touch events as recommended
+            if (event.getAction() == MotionEvent.ACTION_UP) {
+                v.performClick();
+            }
+            return false;
         });
     }
 
@@ -90,12 +84,16 @@ public class MainActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         if (adapter != null) {
-            adapter.notifyDataSetChanged(); // Refresh list to reflect any changes
+            // Use more specific change event instead of notifyDataSetChanged
+            int itemCount = adapter.getItemCount();
+            if (itemCount > 0) {
+                adapter.notifyItemRangeChanged(0, itemCount);
+            }
         }
-        if (searchInput != null) {
-            searchInput.setText(""); // Clear search when returning to main activity
-            searchInput.clearFocus(); // Make sure cursor is hidden when returning
-            searchInput.setCursorVisible(false);
+        if (binding != null) {
+            binding.searchInput.setText(""); // Clear search when returning to main activity
+            binding.searchInput.clearFocus(); // Make sure cursor is hidden when returning
+            binding.searchInput.setCursorVisible(false);
         }
     }
 }
