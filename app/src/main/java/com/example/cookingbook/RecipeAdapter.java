@@ -27,7 +27,7 @@ public class RecipeAdapter extends RecyclerView.Adapter<RecipeAdapter.ViewHolder
         this.filteredRecipes = new ArrayList<>(list); // Initialize filtered list with all recipes
     }
 
-    static class ViewHolder extends RecyclerView.ViewHolder {
+    public static class ViewHolder extends RecyclerView.ViewHolder {
         final TextView title;
         final TextView description;
         final ImageView image;
@@ -57,13 +57,14 @@ public class RecipeAdapter extends RecyclerView.Adapter<RecipeAdapter.ViewHolder
         holder.title.setText(r.getTitle());
         holder.description.setText(r.getDescription());
 
-        // Use Glide for optimized image loading
+        // Improved Glide configuration for better quality
         RequestOptions requestOptions = new RequestOptions()
                 .placeholder(R.drawable.placeholder)
                 .error(R.drawable.placeholder)
-                .override(400, 300) // Resize images to consistent size
-                .centerCrop()
-                .diskCacheStrategy(DiskCacheStrategy.ALL); // Cache both original and resized
+                .fitCenter() // Better quality than centerCrop for varied aspect ratios
+                .diskCacheStrategy(DiskCacheStrategy.ALL) // Cache both original and resized
+                .skipMemoryCache(false) // Enable memory cache for better performance
+                .dontTransform(); // Preserve original quality when possible
 
         if (r.getImageUri() != null && !r.getImageUri().isEmpty()) {
             Glide.with(context)
@@ -102,29 +103,42 @@ public class RecipeAdapter extends RecyclerView.Adapter<RecipeAdapter.ViewHolder
 
     // Method to filter recipes based on search query
     public void filter(String query) {
-        filteredRecipes.clear();
+        ArrayList<Recipe> newFilteredRecipes = new ArrayList<>();
 
         if (query.isEmpty()) {
-            filteredRecipes.addAll(recipes);
+            newFilteredRecipes.addAll(recipes);
         } else {
             String lowerCaseQuery = query.toLowerCase().trim();
             for (Recipe recipe : recipes) {
                 // Search in title and description
                 if ((recipe.getTitle() != null && recipe.getTitle().toLowerCase().contains(lowerCaseQuery)) ||
                         (recipe.getDescription() != null && recipe.getDescription().toLowerCase().contains(lowerCaseQuery))) {
-                    filteredRecipes.add(recipe);
+                    newFilteredRecipes.add(recipe);
                 }
             }
         }
 
-        notifyDataSetChanged();
-    }
+        // Calculate differences and use specific notify methods
+        int oldSize = filteredRecipes.size();
+        int newSize = newFilteredRecipes.size();
 
-    // Method to refresh the filtered list (call this when recipes are added/removed)
-    public void refreshFilter() {
         filteredRecipes.clear();
-        filteredRecipes.addAll(recipes);
-        notifyDataSetChanged();
+        filteredRecipes.addAll(newFilteredRecipes);
+
+        if (oldSize > newSize) {
+            notifyItemRangeRemoved(newSize, oldSize - newSize);
+            if (newSize > 0) {
+                notifyItemRangeChanged(0, newSize);
+            }
+        } else if (oldSize < newSize) {
+            if (oldSize > 0) {
+                notifyItemRangeChanged(0, oldSize);
+            }
+            notifyItemRangeInserted(oldSize, newSize - oldSize);
+        } else {
+            // Same size, just changed content
+            notifyItemRangeChanged(0, newSize);
+        }
     }
 
     private void shareRecipe(Recipe recipe) {
