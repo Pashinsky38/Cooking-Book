@@ -15,10 +15,12 @@ public class RecipeAdapter extends RecyclerView.Adapter<RecipeAdapter.ViewHolder
 
     private final Context context;
     private final ArrayList<Recipe> recipes;
+    private ArrayList<Recipe> filteredRecipes;
 
     public RecipeAdapter(Context ctx, ArrayList<Recipe> list) {
         this.context = ctx;
         this.recipes = list;
+        this.filteredRecipes = new ArrayList<>(list); // Initialize filtered list with all recipes
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {
@@ -45,7 +47,7 @@ public class RecipeAdapter extends RecyclerView.Adapter<RecipeAdapter.ViewHolder
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        final Recipe r = recipes.get(position);
+        final Recipe r = filteredRecipes.get(position);
         holder.title.setText(r.getTitle());
         holder.description.setText(r.getDescription());
 
@@ -55,14 +57,43 @@ public class RecipeAdapter extends RecyclerView.Adapter<RecipeAdapter.ViewHolder
             holder.image.setImageResource(R.drawable.placeholder); // add placeholder image
 
         holder.editBtn.setOnClickListener(view -> {
+            // Find the original position in the main recipes list
+            int originalPosition = recipes.indexOf(r);
             Intent intent = new Intent(context, RecipeFormActivity.class);
-            intent.putExtra("position", holder.getAdapterPosition());
+            intent.putExtra("position", originalPosition);
             context.startActivity(intent);
         });
     }
 
     @Override
     public int getItemCount() {
-        return recipes.size();
+        return filteredRecipes.size();
+    }
+
+    // Method to filter recipes based on search query
+    public void filter(String query) {
+        filteredRecipes.clear();
+
+        if (query.isEmpty()) {
+            filteredRecipes.addAll(recipes);
+        } else {
+            String lowerCaseQuery = query.toLowerCase().trim();
+            for (Recipe recipe : recipes) {
+                // Search in title and description
+                if ((recipe.getTitle() != null && recipe.getTitle().toLowerCase().contains(lowerCaseQuery)) ||
+                        (recipe.getDescription() != null && recipe.getDescription().toLowerCase().contains(lowerCaseQuery))) {
+                    filteredRecipes.add(recipe);
+                }
+            }
+        }
+
+        notifyDataSetChanged();
+    }
+
+    // Method to refresh the filtered list (call this when recipes are added/removed)
+    public void refreshFilter() {
+        filteredRecipes.clear();
+        filteredRecipes.addAll(recipes);
+        notifyDataSetChanged();
     }
 }
