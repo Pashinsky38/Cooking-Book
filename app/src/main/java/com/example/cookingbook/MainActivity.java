@@ -4,7 +4,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import androidx.appcompat.app.AppCompatActivity;
@@ -13,9 +12,9 @@ import androidx.recyclerview.widget.RecyclerView;
 
 public class MainActivity extends AppCompatActivity {
 
-    RecipeAdapter adapter;
-    RecyclerView recipeList;
-    EditText searchInput;
+    private RecipeAdapter adapter;
+    private RecyclerView recipeList;
+    private EditText searchInput;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -24,14 +23,32 @@ public class MainActivity extends AppCompatActivity {
 
         RecipeManager.loadRecipes(this); // Load saved recipes
 
+        initializeViews();
+        setupRecyclerView();
+        setupSearch();
+        setupAddButton();
+        setupFocusAndCursorManagement();
+    }
+
+    private void initializeViews() {
         searchInput = findViewById(R.id.searchInput);
         recipeList = findViewById(R.id.recipeList);
+    }
+
+    private void setupRecyclerView() {
         recipeList.setLayoutManager(new LinearLayoutManager(this));
         adapter = new RecipeAdapter(this, RecipeManager.recipes);
         recipeList.setAdapter(adapter);
+    }
 
+
+
+    private void setupAddButton() {
         Button addBtn = findViewById(R.id.addBtn);
         addBtn.setOnClickListener(v -> startActivity(new Intent(MainActivity.this, RecipeFormActivity.class)));
+    }
+
+    private void setupSearch() {
 
         // Add search functionality
         searchInput.addTextChangedListener(new TextWatcher() {
@@ -50,20 +67,12 @@ public class MainActivity extends AppCompatActivity {
                 // Not needed
             }
         });
+    }
 
+    private void setupFocusAndCursorManagement() {
         // Handle focus changes to control cursor visibility
-        searchInput.setOnFocusChangeListener(new View.OnFocusChangeListener() {
-            @Override
-            public void onFocusChange(View v, boolean hasFocus) {
-                if (!hasFocus) {
-                    // Hide cursor when EditText loses focus
-                    searchInput.setCursorVisible(false);
-                } else {
-                    // Show cursor when EditText gains focus
-                    searchInput.setCursorVisible(true);
-                }
-            }
-        });
+        searchInput.setOnFocusChangeListener((v, hasFocus) -> searchInput.setCursorVisible(hasFocus));
+
 
         // Set cursor initially invisible
         searchInput.setCursorVisible(false);
@@ -80,11 +89,13 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        adapter.notifyDataSetChanged(); // Refresh list to reflect any changes
-        // Clear search when returning to main activity
-        searchInput.setText("");
-        // Make sure cursor is hidden when returning
-        searchInput.clearFocus();
-        searchInput.setCursorVisible(false);
+        if (adapter != null) {
+            adapter.notifyDataSetChanged(); // Refresh list to reflect any changes
+        }
+        if (searchInput != null) {
+            searchInput.setText(""); // Clear search when returning to main activity
+            searchInput.clearFocus(); // Make sure cursor is hidden when returning
+            searchInput.setCursorVisible(false);
+        }
     }
 }
