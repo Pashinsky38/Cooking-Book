@@ -26,7 +26,6 @@ public class RecipeAdapter extends RecyclerView.Adapter<RecipeAdapter.ViewHolder
         final TextView description;
         final ImageView image;
         final Button editBtn;
-        final Button deleteBtn;
 
         public ViewHolder(View v) {
             super(v);
@@ -34,7 +33,6 @@ public class RecipeAdapter extends RecyclerView.Adapter<RecipeAdapter.ViewHolder
             description = v.findViewById(R.id.recipeDesc);
             image = v.findViewById(R.id.recipeImage);
             editBtn = v.findViewById(R.id.editBtn);
-            deleteBtn = v.findViewById(R.id.deleteBtn);
         }
     }
 
@@ -61,16 +59,6 @@ public class RecipeAdapter extends RecyclerView.Adapter<RecipeAdapter.ViewHolder
             intent.putExtra("position", holder.getAdapterPosition());
             context.startActivity(intent);
         });
-
-        holder.deleteBtn.setOnClickListener(view -> {
-            int currentPosition = holder.getAdapterPosition();
-            if (currentPosition != RecyclerView.NO_POSITION) {
-                recipes.remove(currentPosition);
-                RecipeManager.saveRecipes(context); // Save changes
-                notifyItemRemoved(currentPosition);
-            }
-        });
-
     }
 
     @Override

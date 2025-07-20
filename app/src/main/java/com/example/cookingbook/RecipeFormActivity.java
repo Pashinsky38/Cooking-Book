@@ -2,10 +2,12 @@ package com.example.cookingbook;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.*;
 
 import androidx.annotation.NonNull;
@@ -32,6 +34,7 @@ public class RecipeFormActivity extends AppCompatActivity {
         titleInput = findViewById(R.id.titleInput);
         descInput = findViewById(R.id.descInput);
         imageView = findViewById(R.id.recipeImageView);
+        Button deleteBtn = findViewById(R.id.deleteBtn);
         Button chooseImg = findViewById(R.id.chooseImageBtn);
         Button saveBtn = findViewById(R.id.saveBtn);
 
@@ -44,6 +47,11 @@ public class RecipeFormActivity extends AppCompatActivity {
                 selectedImageUri = Uri.parse(recipe.getImageUri());
                 imageView.setImageURI(selectedImageUri);
             }
+            // Show delete button only when editing
+            deleteBtn.setVisibility(View.VISIBLE);
+        } else {
+            // Hide delete button when adding new recipe
+            deleteBtn.setVisibility(View.GONE);
         }
 
         chooseImg.setOnClickListener(v -> {
@@ -72,6 +80,17 @@ public class RecipeFormActivity extends AppCompatActivity {
             RecipeManager.saveRecipes(this); // Save to storage
             finish();
         });
+
+        deleteBtn.setOnClickListener(v -> new AlertDialog.Builder(this)
+                .setTitle("Delete Recipe")
+                .setMessage("Are you sure you want to delete this recipe?")
+                .setPositiveButton("Delete", (dialog, which) -> {
+                    RecipeManager.recipes.remove(editingPosition);
+                    RecipeManager.saveRecipes(this);
+                    finish();
+                })
+                .setNegativeButton("Cancel", null)
+                .show());
     }
 
     private void pickImageFromGallery() {
