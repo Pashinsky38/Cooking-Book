@@ -30,8 +30,6 @@ public class RecipeAdapter extends RecyclerView.Adapter<RecipeAdapter.ViewHolder
     public static class ViewHolder extends RecyclerView.ViewHolder {
         final TextView title;
         final TextView description;
-        final TextView category;
-        final TextView tags;
         final ImageView image;
         final Button editBtn;
         final Button shareBtn;
@@ -40,8 +38,6 @@ public class RecipeAdapter extends RecyclerView.Adapter<RecipeAdapter.ViewHolder
             super(v);
             title = v.findViewById(R.id.recipeTitle);
             description = v.findViewById(R.id.recipeDesc);
-            category = v.findViewById(R.id.recipeCategory);
-            tags = v.findViewById(R.id.recipeTags);
             image = v.findViewById(R.id.recipeImage);
             editBtn = v.findViewById(R.id.editBtn);
             shareBtn = v.findViewById(R.id.shareBtn);
@@ -60,18 +56,6 @@ public class RecipeAdapter extends RecyclerView.Adapter<RecipeAdapter.ViewHolder
         final Recipe r = filteredRecipes.get(position);
         holder.title.setText(r.getTitle());
         holder.description.setText(r.getDescription());
-
-        // Set category
-        holder.category.setText(r.getCategory());
-
-        // Set tags
-        String tagsText = r.getTagsAsString();
-        if (tagsText.isEmpty()) {
-            holder.tags.setVisibility(View.GONE);
-        } else {
-            holder.tags.setVisibility(View.VISIBLE);
-            holder.tags.setText(tagsText);
-        }
 
         // Improved Glide configuration for better quality
         RequestOptions requestOptions = new RequestOptions()
@@ -126,26 +110,9 @@ public class RecipeAdapter extends RecyclerView.Adapter<RecipeAdapter.ViewHolder
         } else {
             String lowerCaseQuery = query.toLowerCase().trim();
             for (Recipe recipe : recipes) {
-                // Search in title, description, category, and tags
-                boolean matches = false;
-
-                if (recipe.getTitle() != null && recipe.getTitle().toLowerCase().contains(lowerCaseQuery)) {
-                    matches = true;
-                } else if (recipe.getDescription() != null && recipe.getDescription().toLowerCase().contains(lowerCaseQuery)) {
-                    matches = true;
-                } else if (recipe.getCategory() != null && recipe.getCategory().toLowerCase().contains(lowerCaseQuery)) {
-                    matches = true;
-                } else {
-                    // Check tags
-                    for (String tag : recipe.getTags()) {
-                        if (tag.toLowerCase().contains(lowerCaseQuery)) {
-                            matches = true;
-                            break;
-                        }
-                    }
-                }
-
-                if (matches) {
+                // Search in title and description
+                if ((recipe.getTitle() != null && recipe.getTitle().toLowerCase().contains(lowerCaseQuery)) ||
+                        (recipe.getDescription() != null && recipe.getDescription().toLowerCase().contains(lowerCaseQuery))) {
                     newFilteredRecipes.add(recipe);
                 }
             }
@@ -174,55 +141,13 @@ public class RecipeAdapter extends RecyclerView.Adapter<RecipeAdapter.ViewHolder
         }
     }
 
-    // Method to filter recipes by category
-    public void filterByCategory(String category) {
-        ArrayList<Recipe> newFilteredRecipes = new ArrayList<>();
-
-        if (category.equals("All")) {
-            newFilteredRecipes.addAll(recipes);
-        } else {
-            for (Recipe recipe : recipes) {
-                if (recipe.getCategory().equals(category)) {
-                    newFilteredRecipes.add(recipe);
-                }
-            }
-        }
-
-        // Update filtered list
-        int oldSize = filteredRecipes.size();
-        int newSize = newFilteredRecipes.size();
-
-        filteredRecipes.clear();
-        filteredRecipes.addAll(newFilteredRecipes);
-
-        if (oldSize > newSize) {
-            notifyItemRangeRemoved(newSize, oldSize - newSize);
-            if (newSize > 0) {
-                notifyItemRangeChanged(0, newSize);
-            }
-        } else if (oldSize < newSize) {
-            if (oldSize > 0) {
-                notifyItemRangeChanged(0, oldSize);
-            }
-            notifyItemRangeInserted(oldSize, newSize - oldSize);
-        } else {
-            notifyItemRangeChanged(0, newSize);
-        }
-    }
-
     private void shareRecipe(Recipe recipe) {
         Intent shareIntent = new Intent(Intent.ACTION_SEND);
 
         // Create the text to share
         StringBuilder shareText = new StringBuilder();
         shareText.append(context.getString(R.string.recipe_prefix)).append(recipe.getTitle()).append("\n\n");
-        shareText.append(context.getString(R.string.category_prefix)).append(recipe.getCategory()).append("\n");
-        shareText.append(context.getString(R.string.description_prefix)).append(recipe.getDescription()).append("\n");
-
-        if (!recipe.getTagsAsString().isEmpty()) {
-            shareText.append(context.getString(R.string.tags_prefix)).append(recipe.getTagsAsString()).append("\n");
-        }
-
+        shareText.append(context.getString(R.string.description_prefix)).append(recipe.getDescription());
         shareText.append(context.getString(R.string.share_suffix));
 
         if (recipe.getImageUri() != null) {

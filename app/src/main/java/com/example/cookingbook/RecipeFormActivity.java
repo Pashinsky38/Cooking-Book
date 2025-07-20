@@ -16,16 +16,12 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-
 public class RecipeFormActivity extends AppCompatActivity {
 
     private static final int IMAGE_PICK_CODE = 101;
     private static final int PERMISSION_CODE = 102;
 
-    private EditText titleInput, descInput, tagsInput;
-    private Spinner categorySpinner;
+    private EditText titleInput, descInput;
     private ImageView imageView;
     private Uri selectedImageUri;
     private int editingPosition = -1;
@@ -37,31 +33,16 @@ public class RecipeFormActivity extends AppCompatActivity {
 
         titleInput = findViewById(R.id.titleInput);
         descInput = findViewById(R.id.descInput);
-        tagsInput = findViewById(R.id.tagsInput);
-        categorySpinner = findViewById(R.id.categorySpinner);
         imageView = findViewById(R.id.recipeImageView);
         Button deleteBtn = findViewById(R.id.deleteBtn);
         Button chooseImg = findViewById(R.id.chooseImageBtn);
         Button saveBtn = findViewById(R.id.saveBtn);
-
-        setupCategorySpinner();
 
         if (getIntent().hasExtra("position")) {
             editingPosition = getIntent().getIntExtra("position", -1);
             Recipe recipe = RecipeManager.recipes.get(editingPosition);
             titleInput.setText(recipe.getTitle());
             descInput.setText(recipe.getDescription());
-            tagsInput.setText(recipe.getTagsAsString());
-
-            // Set category in spinner
-            String[] categories = Recipe.CATEGORIES;
-            for (int i = 0; i < categories.length; i++) {
-                if (categories[i].equals(recipe.getCategory())) {
-                    categorySpinner.setSelection(i);
-                    break;
-                }
-            }
-
             if (recipe.getImageUri() != null) {
                 selectedImageUri = Uri.parse(recipe.getImageUri());
                 imageView.setImageURI(selectedImageUri);
@@ -71,8 +52,6 @@ public class RecipeFormActivity extends AppCompatActivity {
         } else {
             // Hide delete button when adding new recipe
             deleteBtn.setVisibility(View.GONE);
-            // Set default category to "Other" (last item in array)
-            categorySpinner.setSelection(Recipe.CATEGORIES.length - 1);
         }
 
         chooseImg.setOnClickListener(v -> {
@@ -87,28 +66,11 @@ public class RecipeFormActivity extends AppCompatActivity {
         });
 
         saveBtn.setOnClickListener(v -> {
-            String title = titleInput.getText().toString().trim();
-            String desc = descInput.getText().toString().trim();
+            String title = titleInput.getText().toString();
+            String desc = descInput.getText().toString();
             String img = selectedImageUri != null ? selectedImageUri.toString() : null;
-            String category = categorySpinner.getSelectedItem().toString();
-            String tagsString = tagsInput.getText().toString().trim();
 
-            // Validate required fields
-            if (title.isEmpty()) {
-                titleInput.setError("Title is required");
-                titleInput.requestFocus();
-                return;
-            }
-
-            if (desc.isEmpty()) {
-                descInput.setError("Description is required");
-                descInput.requestFocus();
-                return;
-            }
-
-            // Create recipe with category and tags
-            Recipe r = new Recipe(title, desc, img, category, new ArrayList<>());
-            r.setTagsFromString(tagsString);
+            Recipe r = new Recipe(title, desc, img);
 
             if (editingPosition == -1)
                 RecipeManager.recipes.add(r);
@@ -129,16 +91,6 @@ public class RecipeFormActivity extends AppCompatActivity {
                 })
                 .setNegativeButton(getString(R.string.cancel), null)
                 .show());
-    }
-
-    private void setupCategorySpinner() {
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(
-                this,
-                android.R.layout.simple_spinner_item,
-                Arrays.copyOfRange(Recipe.CATEGORIES, 1, Recipe.CATEGORIES.length) // Skip "All" category
-        );
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        categorySpinner.setAdapter(adapter);
     }
 
     private void pickImageFromGallery() {
