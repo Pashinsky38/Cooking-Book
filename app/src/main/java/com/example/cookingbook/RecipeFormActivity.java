@@ -48,18 +48,7 @@ public class RecipeFormActivity extends AppCompatActivity {
         categoryAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         categorySpinner.setAdapter(categoryAdapter);
 
-        // If editing, set the current category
-        if (editingPosition != -1) {
-            Recipe recipe = RecipeManager.recipes.get(editingPosition);
-            String currentCategory = recipe.getCategory();
-            if (currentCategory != null) {
-                int categoryPosition = Arrays.asList(categories).indexOf(currentCategory);
-                if (categoryPosition >= 0) {
-                    categorySpinner.setSelection(categoryPosition);
-                }
-            }
-        }
-
+        // Check if we're editing an existing recipe
         if (getIntent().hasExtra("position")) {
             editingPosition = getIntent().getIntExtra("position", -1);
             Recipe recipe = RecipeManager.recipes.get(editingPosition);
@@ -69,6 +58,16 @@ public class RecipeFormActivity extends AppCompatActivity {
                 selectedImageUri = Uri.parse(recipe.getImageUri());
                 imageView.setImageURI(selectedImageUri);
             }
+
+            // Set the current category for editing
+            String currentCategory = recipe.getCategory();
+            if (currentCategory != null) {
+                int categoryPosition = Arrays.asList(categories).indexOf(currentCategory);
+                if (categoryPosition >= 0) {
+                    categorySpinner.setSelection(categoryPosition);
+                }
+            }
+
             // Show delete button only when editing
             deleteBtn.setVisibility(View.VISIBLE);
         } else {
