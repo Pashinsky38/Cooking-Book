@@ -28,6 +28,7 @@ public class RecipeAdapter extends RecyclerView.Adapter<RecipeAdapter.ViewHolder
         final TextView description;
         final ImageView image;
         final Button editBtn;
+        final Button shareBtn;
 
         public ViewHolder(View v) {
             super(v);
@@ -35,6 +36,7 @@ public class RecipeAdapter extends RecyclerView.Adapter<RecipeAdapter.ViewHolder
             description = v.findViewById(R.id.recipeDesc);
             image = v.findViewById(R.id.recipeImage);
             editBtn = v.findViewById(R.id.editBtn);
+            shareBtn = v.findViewById(R.id.shareBtn);
         }
     }
 
@@ -62,6 +64,10 @@ public class RecipeAdapter extends RecyclerView.Adapter<RecipeAdapter.ViewHolder
             Intent intent = new Intent(context, RecipeFormActivity.class);
             intent.putExtra("position", originalPosition);
             context.startActivity(intent);
+        });
+
+        holder.shareBtn.setOnClickListener(view -> {
+            shareRecipe(r);
         });
     }
 
@@ -95,5 +101,36 @@ public class RecipeAdapter extends RecyclerView.Adapter<RecipeAdapter.ViewHolder
         filteredRecipes.clear();
         filteredRecipes.addAll(recipes);
         notifyDataSetChanged();
+    }
+
+    private void shareRecipe(Recipe recipe) {
+        Intent shareIntent = new Intent(Intent.ACTION_SEND);
+
+        // Create the text to share
+        StringBuilder shareText = new StringBuilder();
+        shareText.append("🍳 Recipe: ").append(recipe.getTitle()).append("\n\n");
+        shareText.append("📝 Description: ").append(recipe.getDescription()).append("\n");
+        shareText.append("\nShared from Cooking Book App");
+
+        if (recipe.getImageUri() != null) {
+            // Share with image
+            shareIntent.setType("image/*");
+            shareIntent.putExtra(Intent.EXTRA_STREAM, Uri.parse(recipe.getImageUri()));
+            shareIntent.putExtra(Intent.EXTRA_TEXT, shareText.toString());
+            shareIntent.putExtra(Intent.EXTRA_SUBJECT, "Recipe: " + recipe.getTitle());
+        } else {
+            // Share text only
+            shareIntent.setType("text/plain");
+            shareIntent.putExtra(Intent.EXTRA_TEXT, shareText.toString());
+            shareIntent.putExtra(Intent.EXTRA_SUBJECT, "Recipe: " + recipe.getTitle());
+        }
+
+        shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
+        try {
+            context.startActivity(Intent.createChooser(shareIntent, "Share Recipe"));
+        } catch (Exception e) {
+            Toast.makeText(context, "Unable to share recipe", Toast.LENGTH_SHORT).show();
+        }
     }
 }

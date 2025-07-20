@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import androidx.appcompat.app.AppCompatActivity;
@@ -49,6 +50,31 @@ public class MainActivity extends AppCompatActivity {
                 // Not needed
             }
         });
+
+        // Handle focus changes to control cursor visibility
+        searchInput.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+            @Override
+            public void onFocusChange(View v, boolean hasFocus) {
+                if (!hasFocus) {
+                    // Hide cursor when EditText loses focus
+                    searchInput.setCursorVisible(false);
+                } else {
+                    // Show cursor when EditText gains focus
+                    searchInput.setCursorVisible(true);
+                }
+            }
+        });
+
+        // Set cursor initially invisible
+        searchInput.setCursorVisible(false);
+
+        // Handle clicks on RecyclerView to clear focus from search input
+        recipeList.setOnTouchListener((v, event) -> {
+            if (searchInput.hasFocus()) {
+                searchInput.clearFocus();
+            }
+            return false; // Don't consume the touch event
+        });
     }
 
     @Override
@@ -57,5 +83,8 @@ public class MainActivity extends AppCompatActivity {
         adapter.notifyDataSetChanged(); // Refresh list to reflect any changes
         // Clear search when returning to main activity
         searchInput.setText("");
+        // Make sure cursor is hidden when returning
+        searchInput.clearFocus();
+        searchInput.setCursorVisible(false);
     }
 }
