@@ -82,14 +82,14 @@ public class RecipeFormActivity extends AppCompatActivity {
         });
 
         deleteBtn.setOnClickListener(v -> new AlertDialog.Builder(this)
-                .setTitle("Delete Recipe")
-                .setMessage("Are you sure you want to delete this recipe?")
-                .setPositiveButton("Delete", (dialog, which) -> {
+                .setTitle(getString(R.string.delete_confirmation_title))
+                .setMessage(getString(R.string.delete_confirmation_message))
+                .setPositiveButton(getString(R.string.delete), (dialog, which) -> {
                     RecipeManager.recipes.remove(editingPosition);
                     RecipeManager.saveRecipes(this);
                     finish();
                 })
-                .setNegativeButton("Cancel", null)
+                .setNegativeButton(getString(R.string.cancel), null)
                 .show());
     }
 
@@ -116,7 +116,7 @@ public class RecipeFormActivity extends AppCompatActivity {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 pickImageFromGallery();
             } else {
-                Toast.makeText(this, "Permission to access images denied", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, getString(R.string.permission_denied), Toast.LENGTH_SHORT).show();
             }
         }
     }

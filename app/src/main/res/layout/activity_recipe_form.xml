@@ -19,7 +19,7 @@
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/titleInput"
-                android:hint="Recipe Title"
+                android:hint="@string/recipe_title_hint"
                 android:inputType="textCapSentences"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"/>
@@ -33,7 +33,7 @@
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/descInput"
-                android:hint="Description"
+                android:hint="@string/description_hint"
                 android:inputType="textMultiLine|textCapSentences"
                 android:minLines="3"
                 android:gravity="top"
@@ -47,13 +47,13 @@
             android:layout_height="200dp"
             android:scaleType="centerCrop"
             android:src="@drawable/placeholder"
-            android:contentDescription="Recipe Image"
+            android:contentDescription="@string/recipe_image_description"
             android:background="?attr/colorControlHighlight"
             android:layout_marginBottom="16dp" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/chooseImageBtn"
-            android:text="Choose Image"
+            android:text="@string/choose_image"
             style="@style/Widget.MaterialComponents.Button.OutlinedButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -62,7 +62,7 @@
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/saveBtn"
-            android:text="Save"
+            android:text="@string/save"
             style="@style/Widget.MaterialComponents.Button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -71,7 +71,7 @@
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/deleteBtn"
-            android:text="Delete Recipe"
+            android:text="@string/delete_recipe"
             style="@style/Widget.MaterialComponents.Button.OutlinedButton"
             android:textColor="?attr/colorError"
             android:strokeColor="?attr/colorError"

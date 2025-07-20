@@ -66,9 +66,7 @@ public class RecipeAdapter extends RecyclerView.Adapter<RecipeAdapter.ViewHolder
             context.startActivity(intent);
         });
 
-        holder.shareBtn.setOnClickListener(view -> {
-            shareRecipe(r);
-        });
+        holder.shareBtn.setOnClickListener(view -> shareRecipe(r));
     }
 
     @Override
@@ -108,29 +106,29 @@ public class RecipeAdapter extends RecyclerView.Adapter<RecipeAdapter.ViewHolder
 
         // Create the text to share
         StringBuilder shareText = new StringBuilder();
-        shareText.append("🍳 Recipe: ").append(recipe.getTitle()).append("\n\n");
-        shareText.append("📝 Description: ").append(recipe.getDescription()).append("\n");
-        shareText.append("\nShared from Cooking Book App");
+        shareText.append(context.getString(R.string.recipe_prefix)).append(recipe.getTitle()).append("\n\n");
+        shareText.append(context.getString(R.string.description_prefix)).append(recipe.getDescription());
+        shareText.append(context.getString(R.string.share_suffix));
 
         if (recipe.getImageUri() != null) {
             // Share with image
             shareIntent.setType("image/*");
             shareIntent.putExtra(Intent.EXTRA_STREAM, Uri.parse(recipe.getImageUri()));
             shareIntent.putExtra(Intent.EXTRA_TEXT, shareText.toString());
-            shareIntent.putExtra(Intent.EXTRA_SUBJECT, "Recipe: " + recipe.getTitle());
+            shareIntent.putExtra(Intent.EXTRA_SUBJECT, context.getString(R.string.share_subject_prefix) + recipe.getTitle());
         } else {
             // Share text only
             shareIntent.setType("text/plain");
             shareIntent.putExtra(Intent.EXTRA_TEXT, shareText.toString());
-            shareIntent.putExtra(Intent.EXTRA_SUBJECT, "Recipe: " + recipe.getTitle());
+            shareIntent.putExtra(Intent.EXTRA_SUBJECT, context.getString(R.string.share_subject_prefix) + recipe.getTitle());
         }
 
         shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
 
         try {
-            context.startActivity(Intent.createChooser(shareIntent, "Share Recipe"));
+            context.startActivity(Intent.createChooser(shareIntent, context.getString(R.string.share_recipe_chooser)));
         } catch (Exception e) {
-            Toast.makeText(context, "Unable to share recipe", Toast.LENGTH_SHORT).show();
+            Toast.makeText(context, context.getString(R.string.share_error), Toast.LENGTH_SHORT).show();
         }
     }
 }
