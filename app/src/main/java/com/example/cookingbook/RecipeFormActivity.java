@@ -179,7 +179,74 @@ public class RecipeFormActivity extends AppCompatActivity {
         ColorUtils.extractColorsFromImage(this, imageUri, (startColor, endColor) -> {
             // Apply the gradient with animation
             applyGradient(startColor, endColor, true);
+
+            // Adjust text colors based on background brightness
+            adjustTextColors(startColor);
         });
+    }
+
+    private void adjustTextColors(int backgroundColor) {
+        // Calculate brightness of the background color
+        int textColor = isColorDark(backgroundColor) ? 0xFFFFFFFF : 0xFF000000;
+
+        // Apply to all text views
+        TextView categoryLabel = findViewById(R.id.categoryLabel);
+        TextView ingredientsLabel = findViewById(R.id.ingredientsLabel);
+        TextView dietaryLabel = findViewById(R.id.dietaryLabel);
+
+        if (categoryLabel != null) categoryLabel.setTextColor(textColor);
+        if (ingredientsLabel != null) ingredientsLabel.setTextColor(textColor);
+        if (dietaryLabel != null) dietaryLabel.setTextColor(textColor);
+
+        // Apply to EditTexts
+        titleInput.setTextColor(textColor);
+        titleInput.setHintTextColor(adjustAlpha(textColor, 0.6f));
+        descInput.setTextColor(textColor);
+        descInput.setHintTextColor(adjustAlpha(textColor, 0.6f));
+        ingredientInput.setTextColor(textColor);
+        ingredientInput.setHintTextColor(adjustAlpha(textColor, 0.6f));
+
+        // Apply to checkboxes
+        vegetarianCheckbox.setTextColor(textColor);
+        veganCheckbox.setTextColor(textColor);
+        glutenFreeCheckbox.setTextColor(textColor);
+        meatCheckbox.setTextColor(textColor);
+
+        // Apply to ingredients list
+        updateIngredientsTextColor(textColor);
+    }
+
+    private int adjustAlpha(int color, float alpha) {
+        int a = Math.round(255 * alpha);
+        int r = (color >> 16) & 0xFF;
+        int g = (color >> 8) & 0xFF;
+        int b = color & 0xFF;
+        return (a << 24) | (r << 16) | (g << 8) | b;
+    }
+
+    private boolean isColorDark(int color) {
+        // Calculate luminance using the relative luminance formula
+        int r = (color >> 16) & 0xFF;
+        int g = (color >> 8) & 0xFF;
+        int b = color & 0xFF;
+
+        // Calculate perceived brightness
+        double brightness = (0.299 * r + 0.587 * g + 0.114 * b);
+
+        return brightness < 128;
+    }
+
+    private void updateIngredientsTextColor(int textColor) {
+        for (int i = 0; i < ingredientsList.getChildCount(); i++) {
+            View child = ingredientsList.getChildAt(i);
+            if (child instanceof LinearLayout) {
+                LinearLayout row = (LinearLayout) child;
+                if (row.getChildCount() > 0 && row.getChildAt(0) instanceof TextView) {
+                    TextView ingredientText = (TextView) row.getChildAt(0);
+                    ingredientText.setTextColor(textColor);
+                }
+            }
+        }
     }
 
     private void applyGradient(int startColor, int endColor, boolean animate) {
@@ -223,6 +290,10 @@ public class RecipeFormActivity extends AppCompatActivity {
 
     private void displayIngredients() {
         ingredientsList.removeAllViews();
+
+        // Determine current text color based on background
+        int textColor = isColorDark(currentStartColor) ? 0xFFFFFFFF : 0xFF000000;
+
         for (int i = 0; i < ingredients.size(); i++) {
             String ingredient = ingredients.get(i);
             LinearLayout ingredientRow = new LinearLayout(this);
@@ -237,7 +308,7 @@ public class RecipeFormActivity extends AppCompatActivity {
             ingredientText.setLayoutParams(new LinearLayout.LayoutParams(
                     0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
             ingredientText.setTextSize(16);
-            ingredientText.setTextColor(getResources().getColor(android.R.color.black));
+            ingredientText.setTextColor(textColor);
 
             Button removeBtn = new Button(this);
             removeBtn.setText("Remove");
