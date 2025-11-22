@@ -35,6 +35,7 @@ public class MainActivity extends AppCompatActivity {
         setupAddButton();
         setupFocusAndCursorManagement();
         setupCategoryFilter();
+        setupDietaryFilter();
         updateEmptyState();
     }
 
@@ -88,6 +89,26 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    private void setupDietaryFilter() {
+        String[] dietaryOptions = {"All", "🌱 Vegetarian", "🌿 Vegan", "🌾 Gluten-Free", "🥩 Meat"};
+        ArrayAdapter<String> dietaryAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, dietaryOptions);
+        dietaryAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        binding.dietarySpinner.setAdapter(dietaryAdapter);
+
+        binding.dietarySpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                String selectedDietary = dietaryOptions[position];
+                adapter.filterByDietary(selectedDietary);
+                updateEmptyState();
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+            }
+        });
+    }
+
     private void setupFocusAndCursorManagement() {
         binding.searchInput.setCursorVisible(false);
 
@@ -129,6 +150,7 @@ public class MainActivity extends AppCompatActivity {
             binding.searchInput.clearFocus();
             binding.searchInput.setCursorVisible(false);
             binding.categorySpinner.setSelection(0);
+            binding.dietarySpinner.setSelection(0);
         }
         updateEmptyState();
     }

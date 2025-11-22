@@ -11,6 +11,7 @@ public class Recipe {
     private boolean isVegetarian;
     private boolean isVegan;
     private boolean isGlutenFree;
+    private boolean hasMeat;
 
     public Recipe() {
         // Needed for Gson
@@ -26,6 +27,7 @@ public class Recipe {
         this.isVegetarian = false;
         this.isVegan = false;
         this.isGlutenFree = false;
+        this.hasMeat = false;
     }
 
     public Recipe(String title, String description, String imageUri, String category) {
@@ -37,10 +39,11 @@ public class Recipe {
         this.isVegetarian = false;
         this.isVegan = false;
         this.isGlutenFree = false;
+        this.hasMeat = false;
     }
 
     public Recipe(String title, String description, String imageUri, String category,
-                  ArrayList<String> ingredients, boolean isVegetarian, boolean isVegan, boolean isGlutenFree) {
+                  ArrayList<String> ingredients, boolean isVegetarian, boolean isVegan, boolean isGlutenFree, boolean hasMeat) {
         this.title = title;
         this.description = description;
         this.imageUri = imageUri;
@@ -49,6 +52,7 @@ public class Recipe {
         this.isVegetarian = isVegetarian;
         this.isVegan = isVegan;
         this.isGlutenFree = isGlutenFree;
+        this.hasMeat = hasMeat;
     }
 
     public String getTitle() { return title; }
@@ -59,6 +63,7 @@ public class Recipe {
     public boolean isVegetarian() { return isVegetarian; }
     public boolean isVegan() { return isVegan; }
     public boolean isGlutenFree() { return isGlutenFree; }
+    public boolean hasMeat() { return hasMeat; }
 
     public void setIngredients(ArrayList<String> ingredients) {
         this.ingredients = ingredients != null ? ingredients : new ArrayList<>();
@@ -66,4 +71,5 @@ public class Recipe {
     public void setVegetarian(boolean vegetarian) { isVegetarian = vegetarian; }
     public void setVegan(boolean vegan) { isVegan = vegan; }
     public void setGlutenFree(boolean glutenFree) { isGlutenFree = glutenFree; }
+    public void setHasMeat(boolean hasMeat) { this.hasMeat = hasMeat; }
 }

@@ -29,7 +29,7 @@ public class RecipeFormActivity extends AppCompatActivity {
     private Uri selectedImageUri;
     private int editingPosition = -1;
     private Spinner categorySpinner;
-    private CheckBox vegetarianCheckbox, veganCheckbox, glutenFreeCheckbox;
+    private CheckBox vegetarianCheckbox, veganCheckbox, glutenFreeCheckbox, meatCheckbox;
     private LinearLayout ingredientsList;
     private ArrayList<String> ingredients;
 
@@ -51,6 +51,7 @@ public class RecipeFormActivity extends AppCompatActivity {
         vegetarianCheckbox = findViewById(R.id.vegetarianCheckbox);
         veganCheckbox = findViewById(R.id.veganCheckbox);
         glutenFreeCheckbox = findViewById(R.id.glutenFreeCheckbox);
+        meatCheckbox = findViewById(R.id.meatCheckbox);
 
         ingredients = new ArrayList<>();
 
@@ -74,6 +75,7 @@ public class RecipeFormActivity extends AppCompatActivity {
             vegetarianCheckbox.setChecked(recipe.isVegetarian());
             veganCheckbox.setChecked(recipe.isVegan());
             glutenFreeCheckbox.setChecked(recipe.isGlutenFree());
+            meatCheckbox.setChecked(recipe.hasMeat());
 
             // Set ingredients
             if (recipe.getIngredients() != null) {
@@ -133,7 +135,8 @@ public class RecipeFormActivity extends AppCompatActivity {
             Recipe r = new Recipe(title, desc, img, category, ingredients,
                     vegetarianCheckbox.isChecked(),
                     veganCheckbox.isChecked(),
-                    glutenFreeCheckbox.isChecked());
+                    glutenFreeCheckbox.isChecked(),
+                    meatCheckbox.isChecked());
 
             if (editingPosition == -1)
                 RecipeManager.recipes.add(r);

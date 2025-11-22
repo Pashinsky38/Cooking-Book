@@ -22,6 +22,7 @@ public class RecipeAdapter extends RecyclerView.Adapter<RecipeAdapter.ViewHolder
     private final ArrayList<Recipe> filteredRecipes;
     private String currentSearchQuery = "";
     private String currentCategory = "All";
+    private String currentDietary = "All";
 
     public RecipeAdapter(Context ctx, ArrayList<Recipe> list) {
         this.context = ctx;
@@ -90,6 +91,9 @@ public class RecipeAdapter extends RecyclerView.Adapter<RecipeAdapter.ViewHolder
         if (r.isGlutenFree()) {
             addDietaryTag(holder.dietaryTagsContainer, "🌾 Gluten-Free");
         }
+        if (r.hasMeat()) {
+            addDietaryTag(holder.dietaryTagsContainer, "🥩 Meat");
+        }
 
         RequestOptions requestOptions = new RequestOptions()
                 .placeholder(R.drawable.placeholder)
@@ -157,6 +161,11 @@ public class RecipeAdapter extends RecyclerView.Adapter<RecipeAdapter.ViewHolder
         applyFilters();
     }
 
+    public void filterByDietary(String dietary) {
+        currentDietary = dietary;
+        applyFilters();
+    }
+
     private void applyFilters() {
         ArrayList<Recipe> newFilteredRecipes = new ArrayList<>();
 
@@ -168,7 +177,20 @@ public class RecipeAdapter extends RecyclerView.Adapter<RecipeAdapter.ViewHolder
             boolean matchesCategory = currentCategory.equals("All") ||
                     (recipe.getCategory() != null && recipe.getCategory().equals(currentCategory));
 
-            if (matchesSearch && matchesCategory) {
+            boolean matchesDietary = currentDietary.equals("All");
+            if (!matchesDietary) {
+                if (currentDietary.contains("Vegetarian")) {
+                    matchesDietary = recipe.isVegetarian();
+                } else if (currentDietary.contains("Vegan")) {
+                    matchesDietary = recipe.isVegan();
+                } else if (currentDietary.contains("Gluten-Free")) {
+                    matchesDietary = recipe.isGlutenFree();
+                } else if (currentDietary.contains("Meat")) {
+                    matchesDietary = recipe.hasMeat();
+                }
+            }
+
+            if (matchesSearch && matchesCategory && matchesDietary) {
                 newFilteredRecipes.add(recipe);
             }
         }

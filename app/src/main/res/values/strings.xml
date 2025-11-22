@@ -29,6 +29,7 @@
     <string name="vegetarian">🌱 Vegetarian</string>
     <string name="vegan">🌿 Vegan</string>
     <string name="gluten_free">🌾 Gluten-Free</string>
+    <string name="meat">🥩 Meat</string>
 
     <!-- Recipe Item -->
     <string name="edit">Edit</string>
