@@ -8,6 +8,8 @@ import android.app.AlertDialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
+import android.graphics.Color;
+import android.graphics.PorterDuff;
 import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.Bundle;
@@ -20,6 +22,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputLayout;
 
 import java.util.ArrayList;
@@ -40,6 +43,7 @@ public class RecipeFormActivity extends AppCompatActivity {
     private ArrayList<String> ingredients;
     private View gradientBackground;
     private TextInputLayout titleInputLayout, descInputLayout, ingredientInputLayout;
+    private MaterialButton chooseImageBtn, saveBtn, deleteBtn, addIngredientBtn;
 
     // Default gradient colors
     private int currentStartColor = 0xFFFF6B6B;
@@ -58,10 +62,10 @@ public class RecipeFormActivity extends AppCompatActivity {
         imageView = findViewById(R.id.recipeImageView);
         ingredientInput = findViewById(R.id.ingredientInput);
         ingredientsList = findViewById(R.id.ingredientsList);
-        Button deleteBtn = findViewById(R.id.deleteBtn);
-        Button chooseImg = findViewById(R.id.chooseImageBtn);
-        Button saveBtn = findViewById(R.id.saveBtn);
-        Button addIngredientBtn = findViewById(R.id.addIngredientBtn);
+        deleteBtn = findViewById(R.id.deleteBtn);
+        chooseImageBtn = findViewById(R.id.chooseImageBtn);
+        saveBtn = findViewById(R.id.saveBtn);
+        addIngredientBtn = findViewById(R.id.addIngredientBtn);
         categorySpinner = findViewById(R.id.categorySpinner);
         vegetarianCheckbox = findViewById(R.id.vegetarianCheckbox);
         veganCheckbox = findViewById(R.id.veganCheckbox);
@@ -133,7 +137,7 @@ public class RecipeFormActivity extends AppCompatActivity {
             }
         });
 
-        chooseImg.setOnClickListener(v -> {
+        chooseImageBtn.setOnClickListener(v -> {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_MEDIA_IMAGES)
                     != PackageManager.PERMISSION_GRANTED) {
                 ActivityCompat.requestPermissions(this,
@@ -220,13 +224,19 @@ public class RecipeFormActivity extends AppCompatActivity {
         updateTextInputLayoutColors(ingredientInputLayout, textColor, hintColor);
 
         // Apply to spinner (category dropdown)
-        updateSpinnerColors(categorySpinner, textColor);
+        updateSpinnerColors(categorySpinner, textColor, backgroundColor);
 
         // Apply to checkboxes (both text and checkbox color)
         updateCheckBoxColors(vegetarianCheckbox, textColor);
         updateCheckBoxColors(veganCheckbox, textColor);
         updateCheckBoxColors(glutenFreeCheckbox, textColor);
         updateCheckBoxColors(meatCheckbox, textColor);
+
+        // Apply to buttons
+        updateButtonColors(chooseImageBtn, textColor, backgroundColor);
+        updateButtonColors(addIngredientBtn, textColor, backgroundColor);
+        updateButtonColors(saveBtn, textColor, backgroundColor);
+        updateButtonColors(deleteBtn, textColor, backgroundColor);
 
         // Apply to ingredients list
         updateIngredientsTextColor(textColor);
@@ -245,8 +255,17 @@ public class RecipeFormActivity extends AppCompatActivity {
         }
     }
 
-    private void updateSpinnerColors(Spinner spinner, int textColor) {
+    private void updateSpinnerColors(Spinner spinner, int textColor, int backgroundColor) {
         if (spinner != null) {
+            // Determine the spinner background color (lighter or darker version of the gradient)
+            int spinnerBgColor = isColorDark(backgroundColor) ?
+                    ColorUtils.adjustBrightness(backgroundColor, 1.3f) :
+                    ColorUtils.adjustBrightness(backgroundColor, 0.9f);
+
+            // Set spinner background
+            spinner.setBackgroundColor(spinnerBgColor);
+            spinner.setPadding(16, 16, 16, 16);
+
             // Update the spinner's text color by refreshing its adapter
             ArrayAdapter<String> adapter = (ArrayAdapter<String>) spinner.getAdapter();
             if (adapter != null) {
@@ -268,6 +287,8 @@ public class RecipeFormActivity extends AppCompatActivity {
                         View view = super.getDropDownView(position, convertView, parent);
                         TextView textView = (TextView) view;
                         textView.setTextColor(textColor);
+                        textView.setBackgroundColor(spinnerBgColor);
+                        textView.setPadding(32, 24, 32, 24);
                         return view;
                     }
                 };
@@ -284,8 +305,61 @@ public class RecipeFormActivity extends AppCompatActivity {
             // Set the text color
             checkBox.setTextColor(textColor);
 
-            // Set the checkbox button tint (the box itself)
-            checkBox.setButtonTintList(ColorStateList.valueOf(textColor));
+            // Create color state list for the checkbox
+            // When checked, the box will be textColor and the tick will be the opposite
+            int tickColor = isColorDark(currentStartColor) ? 0xFF000000 : 0xFFFFFFFF;
+
+            // For the checkbox button (the box and tick)
+            int[][] states = new int[][] {
+                    new int[] { android.R.attr.state_checked },  // checked
+                    new int[] { -android.R.attr.state_checked }  // unchecked
+            };
+
+            int[] colors = new int[] {
+                    textColor,  // checked: box color
+                    textColor   // unchecked: box color
+            };
+
+            ColorStateList colorStateList = new ColorStateList(states, colors);
+            checkBox.setButtonTintList(colorStateList);
+
+            // Set the compound button tint mode to change the tick color
+            checkBox.setButtonTintMode(PorterDuff.Mode.SRC_IN);
+
+            // For API 21+, we can use CompoundButtonCompat to set tick color
+            // The tick color will automatically contrast with the box color
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+                // Create a custom drawable for the checkbox to control tick color
+                android.graphics.drawable.Drawable drawable = checkBox.getButtonDrawable();
+                if (drawable != null) {
+                    drawable.setTint(textColor);
+                }
+            }
+        }
+    }
+
+    private void updateButtonColors(MaterialButton button, int textColor, int backgroundColor) {
+        if (button != null) {
+            // Determine appropriate button colors
+            boolean isDark = isColorDark(backgroundColor);
+
+            if (button == saveBtn) {
+                // Save button: filled button with contrasting colors
+                button.setBackgroundTintList(ColorStateList.valueOf(textColor));
+                button.setTextColor(backgroundColor);
+            } else {
+                // Outlined buttons (choose image, add ingredient, delete)
+                button.setStrokeColor(ColorStateList.valueOf(textColor));
+                button.setTextColor(textColor);
+                button.setBackgroundTintList(ColorStateList.valueOf(Color.TRANSPARENT));
+
+                // Special color for delete button (keep it reddish if possible)
+                if (button == deleteBtn) {
+                    int deleteColor = isDark ? 0xFFFF6B6B : 0xFFD32F2F;
+                    button.setStrokeColor(ColorStateList.valueOf(deleteColor));
+                    button.setTextColor(deleteColor);
+                }
+            }
         }
     }
 
@@ -317,6 +391,11 @@ public class RecipeFormActivity extends AppCompatActivity {
                 if (row.getChildCount() > 0 && row.getChildAt(0) instanceof TextView) {
                     TextView ingredientText = (TextView) row.getChildAt(0);
                     ingredientText.setTextColor(textColor);
+                }
+                // Update remove button color
+                if (row.getChildCount() > 1 && row.getChildAt(1) instanceof Button) {
+                    Button removeBtn = (Button) row.getChildAt(1);
+                    removeBtn.setTextColor(textColor);
                 }
             }
         }
@@ -385,6 +464,7 @@ public class RecipeFormActivity extends AppCompatActivity {
 
             Button removeBtn = new Button(this);
             removeBtn.setText("Remove");
+            removeBtn.setTextColor(textColor);
             removeBtn.setLayoutParams(new LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.WRAP_CONTENT,
                     LinearLayout.LayoutParams.WRAP_CONTENT));
