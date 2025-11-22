@@ -8,6 +8,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.LinearLayout;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -17,6 +18,7 @@ public class MainActivity extends AppCompatActivity {
 
     private RecipeAdapter adapter;
     private ActivityMainBinding binding;
+    private LinearLayout emptyStateLayout;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -24,13 +26,16 @@ public class MainActivity extends AppCompatActivity {
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        RecipeManager.loadRecipes(this); // Load saved recipes
+        emptyStateLayout = findViewById(R.id.emptyStateLayout);
+
+        RecipeManager.loadRecipes(this);
 
         setupRecyclerView();
         setupSearch();
         setupAddButton();
         setupFocusAndCursorManagement();
         setupCategoryFilter();
+        updateEmptyState();
     }
 
     private void setupRecyclerView() {
@@ -41,31 +46,29 @@ public class MainActivity extends AppCompatActivity {
 
     private void setupAddButton() {
         binding.addBtn.setOnClickListener(v -> startActivity(new Intent(MainActivity.this, RecipeFormActivity.class)));
+        emptyStateLayout.findViewById(R.id.emptyStateAddBtn).setOnClickListener(v ->
+                startActivity(new Intent(MainActivity.this, RecipeFormActivity.class)));
     }
 
     private void setupSearch() {
-
-        // Add search functionality
         binding.searchInput.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-                // Not needed
             }
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 adapter.filter(s.toString());
+                updateEmptyState();
             }
 
             @Override
             public void afterTextChanged(Editable s) {
-                // Not needed
             }
         });
     }
 
     private void setupCategoryFilter() {
-        // Create category spinner
         String[] categories = {"All", "Appetizers", "Main Course", "Desserts", "Beverages", "Salads", "Other"};
         ArrayAdapter<String> categoryAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, categories);
         categoryAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
@@ -76,20 +79,18 @@ public class MainActivity extends AppCompatActivity {
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 String selectedCategory = categories[position];
                 adapter.filterByCategory(selectedCategory);
+                updateEmptyState();
             }
 
             @Override
             public void onNothingSelected(AdapterView<?> parent) {
-                // Do nothing
             }
         });
     }
 
     private void setupFocusAndCursorManagement() {
-        // Set cursor initially invisible
         binding.searchInput.setCursorVisible(false);
 
-        // Handle focus and touch events to manage cursor and focus efficiently
         binding.searchInput.setOnFocusChangeListener((v, hasFocus) -> binding.searchInput.setCursorVisible(hasFocus));
 
         binding.recipeList.setOnTouchListener((v, event) -> {
@@ -97,7 +98,6 @@ public class MainActivity extends AppCompatActivity {
                 binding.searchInput.clearFocus();
                 binding.searchInput.setCursorVisible(false);
             }
-            // Accessibility: call performClick for touch events as recommended
             if (event.getAction() == MotionEvent.ACTION_UP) {
                 v.performClick();
             }
@@ -105,20 +105,31 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    private void updateEmptyState() {
+        if (adapter.getItemCount() == 0) {
+            binding.recipeList.setVisibility(View.GONE);
+            emptyStateLayout.setVisibility(View.VISIBLE);
+        } else {
+            binding.recipeList.setVisibility(View.VISIBLE);
+            emptyStateLayout.setVisibility(View.GONE);
+        }
+    }
+
     @Override
     protected void onResume() {
         super.onResume();
         if (adapter != null) {
-            // Use more specific change event instead of notifyDataSetChanged
             int itemCount = adapter.getItemCount();
             if (itemCount > 0) {
                 adapter.notifyItemRangeChanged(0, itemCount);
             }
         }
         if (binding != null) {
-            binding.searchInput.setText(""); // Clear search when returning to main activity
-            binding.searchInput.clearFocus(); // Make sure cursor is hidden when returning
+            binding.searchInput.setText("");
+            binding.searchInput.clearFocus();
             binding.searchInput.setCursorVisible(false);
+            binding.categorySpinner.setSelection(0);
         }
+        updateEmptyState();
     }
 }

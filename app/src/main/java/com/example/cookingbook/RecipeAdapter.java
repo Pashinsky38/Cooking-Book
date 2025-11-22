@@ -26,12 +26,14 @@ public class RecipeAdapter extends RecyclerView.Adapter<RecipeAdapter.ViewHolder
     public RecipeAdapter(Context ctx, ArrayList<Recipe> list) {
         this.context = ctx;
         this.recipes = list;
-        this.filteredRecipes = new ArrayList<>(list); // Initialize filtered list with all recipes
+        this.filteredRecipes = new ArrayList<>(list);
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
         final TextView title;
         final TextView description;
+        final TextView ingredientsPreview;
+        final LinearLayout dietaryTagsContainer;
         final ImageView image;
         final Button editBtn;
         final Button shareBtn;
@@ -40,6 +42,8 @@ public class RecipeAdapter extends RecyclerView.Adapter<RecipeAdapter.ViewHolder
             super(v);
             title = v.findViewById(R.id.recipeTitle);
             description = v.findViewById(R.id.recipeDesc);
+            ingredientsPreview = v.findViewById(R.id.ingredientsPreview);
+            dietaryTagsContainer = v.findViewById(R.id.dietaryTagsContainer);
             image = v.findViewById(R.id.recipeImage);
             editBtn = v.findViewById(R.id.editBtn);
             shareBtn = v.findViewById(R.id.shareBtn);
@@ -59,14 +63,41 @@ public class RecipeAdapter extends RecyclerView.Adapter<RecipeAdapter.ViewHolder
         holder.title.setText(r.getTitle());
         holder.description.setText(r.getDescription());
 
-        // Improved Glide configuration for better quality
+        // Display ingredients preview
+        if (r.getIngredients() != null && !r.getIngredients().isEmpty()) {
+            StringBuilder ingredientsText = new StringBuilder("Ingredients: ");
+            for (int i = 0; i < Math.min(3, r.getIngredients().size()); i++) {
+                if (i > 0) ingredientsText.append(", ");
+                ingredientsText.append(r.getIngredients().get(i));
+            }
+            if (r.getIngredients().size() > 3) {
+                ingredientsText.append(", +").append(r.getIngredients().size() - 3).append(" more");
+            }
+            holder.ingredientsPreview.setText(ingredientsText.toString());
+            holder.ingredientsPreview.setVisibility(View.VISIBLE);
+        } else {
+            holder.ingredientsPreview.setVisibility(View.GONE);
+        }
+
+        // Display dietary tags
+        holder.dietaryTagsContainer.removeAllViews();
+        if (r.isVegetarian()) {
+            addDietaryTag(holder.dietaryTagsContainer, "🌱 Vegetarian");
+        }
+        if (r.isVegan()) {
+            addDietaryTag(holder.dietaryTagsContainer, "🌿 Vegan");
+        }
+        if (r.isGlutenFree()) {
+            addDietaryTag(holder.dietaryTagsContainer, "🌾 Gluten-Free");
+        }
+
         RequestOptions requestOptions = new RequestOptions()
                 .placeholder(R.drawable.placeholder)
                 .error(R.drawable.placeholder)
-                .fitCenter() // Better quality than centerCrop for varied aspect ratios
-                .diskCacheStrategy(DiskCacheStrategy.ALL) // Cache both original and resized
-                .skipMemoryCache(false) // Enable memory cache for better performance
-                .dontTransform(); // Preserve original quality when possible
+                .fitCenter()
+                .diskCacheStrategy(DiskCacheStrategy.ALL)
+                .skipMemoryCache(false)
+                .dontTransform();
 
         if (r.getImageUri() != null && !r.getImageUri().isEmpty()) {
             Glide.with(context)
@@ -81,7 +112,6 @@ public class RecipeAdapter extends RecyclerView.Adapter<RecipeAdapter.ViewHolder
         }
 
         holder.editBtn.setOnClickListener(view -> {
-            // Find the original position in the main recipes list
             int originalPosition = recipes.indexOf(r);
             Intent intent = new Intent(context, RecipeFormActivity.class);
             intent.putExtra("position", originalPosition);
@@ -89,6 +119,21 @@ public class RecipeAdapter extends RecyclerView.Adapter<RecipeAdapter.ViewHolder
         });
 
         holder.shareBtn.setOnClickListener(view -> shareRecipe(r));
+    }
+
+    private void addDietaryTag(LinearLayout container, String tagText) {
+        TextView tag = new TextView(context);
+        tag.setText(tagText);
+        tag.setTextSize(12);
+        tag.setTextColor(0xFFFFFFFF);
+        tag.setBackgroundColor(0xFF4CAF50);
+        tag.setPadding(12, 6, 12, 6);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT);
+        params.setMargins(4, 0, 4, 0);
+        tag.setLayoutParams(params);
+        container.addView(tag);
     }
 
     @Override
@@ -99,11 +144,9 @@ public class RecipeAdapter extends RecyclerView.Adapter<RecipeAdapter.ViewHolder
     @Override
     public void onViewRecycled(@NonNull ViewHolder holder) {
         super.onViewRecycled(holder);
-        // Clear Glide requests for recycled views
         Glide.with(context).clear(holder.image);
     }
 
-    // Method to filter recipes based on search query
     public void filter(String query) {
         currentSearchQuery = query;
         applyFilters();
@@ -130,7 +173,6 @@ public class RecipeAdapter extends RecyclerView.Adapter<RecipeAdapter.ViewHolder
             }
         }
 
-        // Update filtered list with animation
         int oldSize = filteredRecipes.size();
         int newSize = newFilteredRecipes.size();
 
@@ -155,20 +197,26 @@ public class RecipeAdapter extends RecyclerView.Adapter<RecipeAdapter.ViewHolder
     private void shareRecipe(Recipe recipe) {
         Intent shareIntent = new Intent(Intent.ACTION_SEND);
 
-        // Create the text to share
         StringBuilder shareText = new StringBuilder();
         shareText.append(context.getString(R.string.recipe_prefix)).append(recipe.getTitle()).append("\n\n");
-        shareText.append(context.getString(R.string.description_prefix)).append(recipe.getDescription());
+        shareText.append(context.getString(R.string.description_prefix)).append(recipe.getDescription()).append("\n\n");
+
+        if (recipe.getIngredients() != null && !recipe.getIngredients().isEmpty()) {
+            shareText.append("📋 Ingredients:\n");
+            for (String ingredient : recipe.getIngredients()) {
+                shareText.append("• ").append(ingredient).append("\n");
+            }
+            shareText.append("\n");
+        }
+
         shareText.append(context.getString(R.string.share_suffix));
 
         if (recipe.getImageUri() != null) {
-            // Share with image
             shareIntent.setType("image/*");
             shareIntent.putExtra(Intent.EXTRA_STREAM, Uri.parse(recipe.getImageUri()));
             shareIntent.putExtra(Intent.EXTRA_TEXT, shareText.toString());
             shareIntent.putExtra(Intent.EXTRA_SUBJECT, context.getString(R.string.share_subject_prefix) + recipe.getTitle());
         } else {
-            // Share text only
             shareIntent.setType("text/plain");
             shareIntent.putExtra(Intent.EXTRA_TEXT, shareText.toString());
             shareIntent.putExtra(Intent.EXTRA_SUBJECT, context.getString(R.string.share_subject_prefix) + recipe.getTitle());
