@@ -48,4 +48,7 @@ dependencies {
     // Add Glide for optimized image loading
     implementation(libs.glide)
     annotationProcessor(libs.compiler)
+
+    // For palette
+    implementation(libs.palette.ktx)
 }
