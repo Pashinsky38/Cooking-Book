@@ -7,6 +7,7 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.res.ColorStateList;
 import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.Bundle;
@@ -18,6 +19,8 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+
+import com.google.android.material.textfield.TextInputLayout;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -36,6 +39,7 @@ public class RecipeFormActivity extends AppCompatActivity {
     private LinearLayout ingredientsList;
     private ArrayList<String> ingredients;
     private View gradientBackground;
+    private TextInputLayout titleInputLayout, descInputLayout, ingredientInputLayout;
 
     // Default gradient colors
     private int currentStartColor = 0xFFFF6B6B;
@@ -46,6 +50,9 @@ public class RecipeFormActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_recipe_form);
 
+        titleInputLayout = findViewById(R.id.titleInputLayout);
+        descInputLayout = findViewById(R.id.descInputLayout);
+        ingredientInputLayout = findViewById(R.id.ingredientInputLayout);
         titleInput = findViewById(R.id.titleInput);
         descInput = findViewById(R.id.descInput);
         imageView = findViewById(R.id.recipeImageView);
@@ -188,6 +195,7 @@ public class RecipeFormActivity extends AppCompatActivity {
     private void adjustTextColors(int backgroundColor) {
         // Calculate brightness of the background color
         int textColor = isColorDark(backgroundColor) ? 0xFFFFFFFF : 0xFF000000;
+        int hintColor = adjustAlpha(textColor, 0.6f);
 
         // Apply to all text views
         TextView categoryLabel = findViewById(R.id.categoryLabel);
@@ -200,20 +208,85 @@ public class RecipeFormActivity extends AppCompatActivity {
 
         // Apply to EditTexts
         titleInput.setTextColor(textColor);
-        titleInput.setHintTextColor(adjustAlpha(textColor, 0.6f));
+        titleInput.setHintTextColor(hintColor);
         descInput.setTextColor(textColor);
-        descInput.setHintTextColor(adjustAlpha(textColor, 0.6f));
+        descInput.setHintTextColor(hintColor);
         ingredientInput.setTextColor(textColor);
-        ingredientInput.setHintTextColor(adjustAlpha(textColor, 0.6f));
+        ingredientInput.setHintTextColor(hintColor);
 
-        // Apply to checkboxes
-        vegetarianCheckbox.setTextColor(textColor);
-        veganCheckbox.setTextColor(textColor);
-        glutenFreeCheckbox.setTextColor(textColor);
-        meatCheckbox.setTextColor(textColor);
+        // Apply to TextInputLayout borders and hints
+        updateTextInputLayoutColors(titleInputLayout, textColor, hintColor);
+        updateTextInputLayoutColors(descInputLayout, textColor, hintColor);
+        updateTextInputLayoutColors(ingredientInputLayout, textColor, hintColor);
+
+        // Apply to spinner (category dropdown)
+        updateSpinnerColors(categorySpinner, textColor);
+
+        // Apply to checkboxes (both text and checkbox color)
+        updateCheckBoxColors(vegetarianCheckbox, textColor);
+        updateCheckBoxColors(veganCheckbox, textColor);
+        updateCheckBoxColors(glutenFreeCheckbox, textColor);
+        updateCheckBoxColors(meatCheckbox, textColor);
 
         // Apply to ingredients list
         updateIngredientsTextColor(textColor);
+    }
+
+    private void updateTextInputLayoutColors(TextInputLayout layout, int textColor, int hintColor) {
+        if (layout != null) {
+            // Set box stroke color (border color)
+            layout.setBoxStrokeColor(textColor);
+
+            // Set hint text color
+            layout.setDefaultHintTextColor(ColorStateList.valueOf(hintColor));
+
+            // Set the hint text color when focused
+            layout.setHintTextColor(ColorStateList.valueOf(textColor));
+        }
+    }
+
+    private void updateSpinnerColors(Spinner spinner, int textColor) {
+        if (spinner != null) {
+            // Update the spinner's text color by refreshing its adapter
+            ArrayAdapter<String> adapter = (ArrayAdapter<String>) spinner.getAdapter();
+            if (adapter != null) {
+                // Create a custom adapter that uses the dynamic text color
+                ArrayAdapter<String> newAdapter = new ArrayAdapter<String>(
+                        this,
+                        android.R.layout.simple_spinner_item,
+                        new String[]{"Appetizers", "Main Course", "Desserts", "Beverages", "Salads", "Other"}) {
+                    @Override
+                    public View getView(int position, View convertView, android.view.ViewGroup parent) {
+                        View view = super.getView(position, convertView, parent);
+                        TextView textView = (TextView) view;
+                        textView.setTextColor(textColor);
+                        return view;
+                    }
+
+                    @Override
+                    public View getDropDownView(int position, View convertView, android.view.ViewGroup parent) {
+                        View view = super.getDropDownView(position, convertView, parent);
+                        TextView textView = (TextView) view;
+                        textView.setTextColor(textColor);
+                        return view;
+                    }
+                };
+                newAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                int selectedPosition = spinner.getSelectedItemPosition();
+                spinner.setAdapter(newAdapter);
+                spinner.setSelection(selectedPosition);
+            }
+        }
+    }
+
+    private void updateCheckBoxColors(CheckBox checkBox, int textColor) {
+        if (checkBox != null) {
+            // Set the text color
+            checkBox.setTextColor(textColor);
+
+            // Set the checkbox button tint (the box itself)
+            checkBox.setButtonTintList(ColorStateList.valueOf(textColor));
+        }
     }
 
     private int adjustAlpha(int color, float alpha) {
