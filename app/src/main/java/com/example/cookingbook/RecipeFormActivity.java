@@ -1,10 +1,13 @@
 package com.example.cookingbook;
 
 import android.Manifest;
+import android.animation.ArgbEvaluator;
+import android.animation.ValueAnimator;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
@@ -32,6 +35,11 @@ public class RecipeFormActivity extends AppCompatActivity {
     private CheckBox vegetarianCheckbox, veganCheckbox, glutenFreeCheckbox, meatCheckbox;
     private LinearLayout ingredientsList;
     private ArrayList<String> ingredients;
+    private View gradientBackground;
+
+    // Default gradient colors
+    private int currentStartColor = 0xFFFF6B6B;
+    private int currentEndColor = 0xFFFFD93D;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,6 +60,7 @@ public class RecipeFormActivity extends AppCompatActivity {
         veganCheckbox = findViewById(R.id.veganCheckbox);
         glutenFreeCheckbox = findViewById(R.id.glutenFreeCheckbox);
         meatCheckbox = findViewById(R.id.meatCheckbox);
+        gradientBackground = findViewById(R.id.dynamicGradientBackground);
 
         ingredients = new ArrayList<>();
 
@@ -60,15 +69,22 @@ public class RecipeFormActivity extends AppCompatActivity {
         categoryAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         categorySpinner.setAdapter(categoryAdapter);
 
+        // Set initial gradient
+        applyGradient(currentStartColor, currentEndColor, false);
+
         // Check if we're editing an existing recipe
         if (getIntent().hasExtra("position")) {
             editingPosition = getIntent().getIntExtra("position", -1);
             Recipe recipe = RecipeManager.recipes.get(editingPosition);
             titleInput.setText(recipe.getTitle());
             descInput.setText(recipe.getDescription());
-            if (recipe.getImageUri() != null) {
+
+            if (recipe.getImageUri() != null && !recipe.getImageUri().isEmpty()) {
                 selectedImageUri = Uri.parse(recipe.getImageUri());
                 imageView.setImageURI(selectedImageUri);
+
+                // Extract colors from the image and apply gradient
+                extractAndApplyColors(selectedImageUri);
             }
 
             // Set dietary filters
@@ -159,6 +175,52 @@ public class RecipeFormActivity extends AppCompatActivity {
                 .show());
     }
 
+    private void extractAndApplyColors(Uri imageUri) {
+        ColorUtils.extractColorsFromImage(this, imageUri, (startColor, endColor) -> {
+            // Apply the gradient with animation
+            applyGradient(startColor, endColor, true);
+        });
+    }
+
+    private void applyGradient(int startColor, int endColor, boolean animate) {
+        GradientDrawable newGradient = new GradientDrawable(
+                GradientDrawable.Orientation.TOP_BOTTOM,
+                new int[]{startColor, endColor}
+        );
+
+        if (animate) {
+            // Animate from current colors to new colors
+            animateGradientChange(currentStartColor, currentEndColor, startColor, endColor);
+        } else {
+            gradientBackground.setBackground(newGradient);
+        }
+
+        currentStartColor = startColor;
+        currentEndColor = endColor;
+    }
+
+    private void animateGradientChange(int fromStart, int fromEnd, int toStart, int toEnd) {
+        ValueAnimator animator = ValueAnimator.ofFloat(0f, 1f);
+        animator.setDuration(500);
+
+        animator.addUpdateListener(animation -> {
+            float fraction = animation.getAnimatedFraction();
+            ArgbEvaluator evaluator = new ArgbEvaluator();
+
+            int currentStart = (int) evaluator.evaluate(fraction, fromStart, toStart);
+            int currentEnd = (int) evaluator.evaluate(fraction, fromEnd, toEnd);
+
+            GradientDrawable gradient = new GradientDrawable(
+                    GradientDrawable.Orientation.TOP_BOTTOM,
+                    new int[]{currentStart, currentEnd}
+            );
+
+            gradientBackground.setBackground(gradient);
+        });
+
+        animator.start();
+    }
+
     private void displayIngredients() {
         ingredientsList.removeAllViews();
         for (int i = 0; i < ingredients.size(); i++) {
@@ -206,6 +268,9 @@ public class RecipeFormActivity extends AppCompatActivity {
         if (requestCode == IMAGE_PICK_CODE && resultCode == Activity.RESULT_OK && data != null) {
             selectedImageUri = data.getData();
             imageView.setImageURI(selectedImageUri);
+
+            // Extract colors and update gradient when new image is selected
+            extractAndApplyColors(selectedImageUri);
         }
     }
 
