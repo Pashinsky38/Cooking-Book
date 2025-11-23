@@ -15,7 +15,10 @@ import com.bumptech.glide.request.RequestOptions;
 
 import java.util.ArrayList;
 
-public class RecipeAdapter extends RecyclerView.Adapter<RecipeAdapter.ViewHolder> {
+public class RecipeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
+
+    private static final int VIEW_TYPE_FULL = 0;
+    private static final int VIEW_TYPE_COMPACT = 1;
 
     private final Context context;
     private final ArrayList<Recipe> recipes;
@@ -23,6 +26,7 @@ public class RecipeAdapter extends RecyclerView.Adapter<RecipeAdapter.ViewHolder
     private String currentSearchQuery = "";
     private String currentCategory = "All";
     private String currentDietary = "All";
+    private boolean isCompactMode = false;
 
     public RecipeAdapter(Context ctx, ArrayList<Recipe> list) {
         this.context = ctx;
@@ -30,7 +34,26 @@ public class RecipeAdapter extends RecyclerView.Adapter<RecipeAdapter.ViewHolder
         this.filteredRecipes = new ArrayList<>(list);
     }
 
-    public static class ViewHolder extends RecyclerView.ViewHolder {
+    public void toggleDisplayMode() {
+        isCompactMode = !isCompactMode;
+        notifyDataSetChanged();
+    }
+
+    public void setDisplayMode(boolean compact) {
+        isCompactMode = compact;
+        notifyDataSetChanged();
+    }
+
+    public boolean isCompactMode() {
+        return isCompactMode;
+    }
+
+    @Override
+    public int getItemViewType(int position) {
+        return isCompactMode ? VIEW_TYPE_COMPACT : VIEW_TYPE_FULL;
+    }
+
+    public static class FullViewHolder extends RecyclerView.ViewHolder {
         final TextView title;
         final TextView description;
         final TextView ingredientsPreview;
@@ -39,7 +62,7 @@ public class RecipeAdapter extends RecyclerView.Adapter<RecipeAdapter.ViewHolder
         final Button editBtn;
         final Button shareBtn;
 
-        public ViewHolder(View v) {
+        public FullViewHolder(View v) {
             super(v);
             title = v.findViewById(R.id.recipeTitle);
             description = v.findViewById(R.id.recipeDesc);
@@ -51,16 +74,77 @@ public class RecipeAdapter extends RecyclerView.Adapter<RecipeAdapter.ViewHolder
         }
     }
 
+    public static class CompactViewHolder extends RecyclerView.ViewHolder {
+        final TextView title;
+        final ImageView image;
+        final Button editBtn;
+        final Button shareBtn;
+
+        public CompactViewHolder(View v) {
+            super(v);
+            title = v.findViewById(R.id.recipeTitle);
+            image = v.findViewById(R.id.recipeImage);
+            editBtn = v.findViewById(R.id.editBtn);
+            shareBtn = v.findViewById(R.id.shareBtn);
+        }
+    }
+
     @NonNull
     @Override
-    public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.recipe_item, parent, false);
-        return new ViewHolder(v);
+    public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+        if (viewType == VIEW_TYPE_COMPACT) {
+            View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.recipe_item_compact, parent, false);
+            return new CompactViewHolder(v);
+        } else {
+            View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.recipe_item, parent, false);
+            return new FullViewHolder(v);
+        }
     }
 
     @Override
-    public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
         final Recipe r = filteredRecipes.get(position);
+
+        if (holder instanceof CompactViewHolder) {
+            bindCompactViewHolder((CompactViewHolder) holder, r);
+        } else if (holder instanceof FullViewHolder) {
+            bindFullViewHolder((FullViewHolder) holder, r);
+        }
+    }
+
+    private void bindCompactViewHolder(CompactViewHolder holder, Recipe r) {
+        holder.title.setText(r.getTitle());
+
+        RequestOptions requestOptions = new RequestOptions()
+                .placeholder(R.drawable.placeholder)
+                .error(R.drawable.placeholder)
+                .centerCrop()
+                .diskCacheStrategy(DiskCacheStrategy.ALL)
+                .skipMemoryCache(false);
+
+        if (r.getImageUri() != null && !r.getImageUri().isEmpty()) {
+            Glide.with(context)
+                    .load(Uri.parse(r.getImageUri()))
+                    .apply(requestOptions)
+                    .into(holder.image);
+        } else {
+            Glide.with(context)
+                    .load(R.drawable.placeholder)
+                    .apply(requestOptions)
+                    .into(holder.image);
+        }
+
+        holder.editBtn.setOnClickListener(view -> {
+            int originalPosition = recipes.indexOf(r);
+            Intent intent = new Intent(context, RecipeFormActivity.class);
+            intent.putExtra("position", originalPosition);
+            context.startActivity(intent);
+        });
+
+        holder.shareBtn.setOnClickListener(view -> shareRecipe(r));
+    }
+
+    private void bindFullViewHolder(FullViewHolder holder, Recipe r) {
         holder.title.setText(r.getTitle());
         holder.description.setText(r.getDescription());
 
@@ -146,9 +230,13 @@ public class RecipeAdapter extends RecyclerView.Adapter<RecipeAdapter.ViewHolder
     }
 
     @Override
-    public void onViewRecycled(@NonNull ViewHolder holder) {
+    public void onViewRecycled(@NonNull RecyclerView.ViewHolder holder) {
         super.onViewRecycled(holder);
-        Glide.with(context).clear(holder.image);
+        if (holder instanceof FullViewHolder) {
+            Glide.with(context).clear(((FullViewHolder) holder).image);
+        } else if (holder instanceof CompactViewHolder) {
+            Glide.with(context).clear(((CompactViewHolder) holder).image);
+        }
     }
 
     public void filter(String query) {

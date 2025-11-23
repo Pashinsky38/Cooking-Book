@@ -1,6 +1,7 @@
 package com.example.cookingbook;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -13,12 +14,17 @@ import android.widget.LinearLayout;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import com.example.cookingbook.databinding.ActivityMainBinding;
+import com.google.android.material.button.MaterialButton;
 
 public class MainActivity extends AppCompatActivity {
 
     private RecipeAdapter adapter;
     private ActivityMainBinding binding;
     private LinearLayout emptyStateLayout;
+    private MaterialButton toggleDisplayBtn;
+    private SharedPreferences prefs;
+    private static final String PREFS_NAME = "display_preferences";
+    private static final String KEY_COMPACT_MODE = "compact_mode";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -27,6 +33,8 @@ public class MainActivity extends AppCompatActivity {
         setContentView(binding.getRoot());
 
         emptyStateLayout = findViewById(R.id.emptyStateLayout);
+        toggleDisplayBtn = findViewById(R.id.toggleDisplayBtn);
+        prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
 
         RecipeManager.loadRecipes(this);
 
@@ -36,12 +44,19 @@ public class MainActivity extends AppCompatActivity {
         setupFocusAndCursorManagement();
         setupCategoryFilter();
         setupDietaryFilter();
+        setupToggleDisplayButton();
         updateEmptyState();
     }
 
     private void setupRecyclerView() {
         binding.recipeList.setLayoutManager(new LinearLayoutManager(this));
         adapter = new RecipeAdapter(this, RecipeManager.recipes);
+
+        // Load saved display mode preference
+        boolean compactMode = prefs.getBoolean(KEY_COMPACT_MODE, false);
+        adapter.setDisplayMode(compactMode);
+        updateToggleButtonText();
+
         binding.recipeList.setAdapter(adapter);
     }
 
@@ -49,6 +64,26 @@ public class MainActivity extends AppCompatActivity {
         binding.addBtn.setOnClickListener(v -> startActivity(new Intent(MainActivity.this, RecipeFormActivity.class)));
         emptyStateLayout.findViewById(R.id.emptyStateAddBtn).setOnClickListener(v ->
                 startActivity(new Intent(MainActivity.this, RecipeFormActivity.class)));
+    }
+
+    private void setupToggleDisplayButton() {
+        toggleDisplayBtn.setOnClickListener(v -> {
+            adapter.toggleDisplayMode();
+            updateToggleButtonText();
+
+            // Save preference
+            prefs.edit().putBoolean(KEY_COMPACT_MODE, adapter.isCompactMode()).apply();
+        });
+    }
+
+    private void updateToggleButtonText() {
+        if (adapter.isCompactMode()) {
+            toggleDisplayBtn.setText(R.string.full_view);
+            toggleDisplayBtn.setIconResource(android.R.drawable.ic_menu_view);
+        } else {
+            toggleDisplayBtn.setText(R.string.compact_view);
+            toggleDisplayBtn.setIconResource(android.R.drawable.ic_menu_sort_by_size);
+        }
     }
 
     private void setupSearch() {

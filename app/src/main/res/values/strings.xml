@@ -9,6 +9,8 @@
     <string name="empty_state_title">No Recipes Yet</string>
     <string name="empty_state_message">Start building your collection by adding your first recipe. Share your favorite dishes!</string>
     <string name="add_first_recipe">Add First Recipe</string>
+    <string name="compact_view">Compact View</string>
+    <string name="full_view">Full View</string>
 
     <!-- Recipe Form Activity -->
     <string name="recipe_title_hint">Recipe Title</string>
