@@ -7,7 +7,7 @@ public class Recipe {
     private String description;
     private String imageUri;
     private String category;
-    private ArrayList<String> ingredients;
+    private final ArrayList<String> ingredients;
     private boolean isVegetarian;
     private boolean isVegan;
     private boolean isGlutenFree;
@@ -65,11 +65,4 @@ public class Recipe {
     public boolean isGlutenFree() { return isGlutenFree; }
     public boolean hasMeat() { return hasMeat; }
 
-    public void setIngredients(ArrayList<String> ingredients) {
-        this.ingredients = ingredients != null ? ingredients : new ArrayList<>();
-    }
-    public void setVegetarian(boolean vegetarian) { isVegetarian = vegetarian; }
-    public void setVegan(boolean vegan) { isVegan = vegan; }
-    public void setGlutenFree(boolean glutenFree) { isGlutenFree = glutenFree; }
-    public void setHasMeat(boolean hasMeat) { this.hasMeat = hasMeat; }
 }

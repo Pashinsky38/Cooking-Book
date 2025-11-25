@@ -32,10 +32,7 @@ public class ColorUtils {
                                 int vibrantColor = palette.getVibrantColor(0xFFD93D);
 
                                 // Create a lighter version for complementary gradient
-                                int startColor = dominantColor;
-                                int endColor = vibrantColor;
-
-                                listener.onColorExtracted(startColor, endColor);
+                                listener.onColorExtracted(dominantColor, vibrantColor);
                             }
                         });
                     }
