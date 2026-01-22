@@ -1,5 +1,6 @@
 package com.example.cookingbook;
 
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -145,20 +146,38 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setupFocusAndCursorManagement() {
+        // Initially hide cursor
         binding.searchInput.setCursorVisible(false);
 
-        binding.searchInput.setOnFocusChangeListener((v, hasFocus) -> binding.searchInput.setCursorVisible(hasFocus));
+        // Show/hide cursor based on focus
+        binding.searchInput.setOnFocusChangeListener((v, hasFocus) -> {
+            binding.searchInput.setCursorVisible(hasFocus);
 
-        binding.recipeList.setOnTouchListener((v, event) -> {
-            if (binding.searchInput.hasFocus()) {
-                binding.searchInput.clearFocus();
-                binding.searchInput.setCursorVisible(false);
+            // Hide keyboard when focus is lost
+            if (!hasFocus) {
+                hideKeyboard(v);
             }
-            if (event.getAction() == MotionEvent.ACTION_UP) {
-                v.performClick();
-            }
-            return false;
         });
+
+        // Clear focus when tapping on the RecyclerView
+        binding.recipeList.setOnTouchListener((v, event) -> {
+            if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                if (binding.searchInput.hasFocus()) {
+                    binding.searchInput.clearFocus();
+                    // Cursor visibility is now handled by OnFocusChangeListener
+                }
+            }
+            return false; // Allow the touch event to continue for scrolling
+        });
+    }
+
+    // Helper method to hide the keyboard
+    private void hideKeyboard(View view) {
+        android.view.inputmethod.InputMethodManager imm =
+                (android.view.inputmethod.InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+        if (imm != null) {
+            imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+        }
     }
 
     private void updateEmptyState() {
