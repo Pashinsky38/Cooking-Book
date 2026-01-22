@@ -308,8 +308,8 @@ public class RecipeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
         Intent shareIntent = new Intent(Intent.ACTION_SEND);
 
         StringBuilder shareText = new StringBuilder();
-        shareText.append(context.getString(R.string.recipe_prefix)).append(recipe.getTitle()).append("\n\n");
-        shareText.append(context.getString(R.string.description_prefix)).append(recipe.getDescription()).append("\n\n");
+        shareText.append(recipe.getTitle()).append("\n\n");
+        shareText.append(recipe.getDescription()).append("\n\n");
 
         if (recipe.getIngredients() != null && !recipe.getIngredients().isEmpty()) {
             shareText.append("📋 Ingredients:\n");
