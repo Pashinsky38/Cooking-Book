@@ -22,8 +22,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
-import com.google.android.material.button.MaterialButton;
-import com.google.android.material.textfield.TextInputLayout;
+import com.example.cookingbook.databinding.ActivityRecipeFormBinding;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -33,17 +32,10 @@ public class RecipeFormActivity extends AppCompatActivity {
     private static final int IMAGE_PICK_CODE = 101;
     private static final int PERMISSION_CODE = 102;
 
-    private EditText titleInput, descInput, ingredientInput;
-    private ImageView imageView;
+    private ActivityRecipeFormBinding binding;
     private Uri selectedImageUri;
     private int editingPosition = -1;
-    private Spinner categorySpinner;
-    private CheckBox vegetarianCheckbox, veganCheckbox, glutenFreeCheckbox, meatCheckbox;
-    private LinearLayout ingredientsList;
     private ArrayList<String> ingredients;
-    private View gradientBackground;
-    private TextInputLayout titleInputLayout, descInputLayout, ingredientInputLayout;
-    private MaterialButton chooseImageBtn, saveBtn, deleteBtn, addIngredientBtn;
 
     // Default gradient colors
     private int currentStartColor = 0xFFFF6B6B;
@@ -52,33 +44,15 @@ public class RecipeFormActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_recipe_form);
-
-        titleInputLayout = findViewById(R.id.titleInputLayout);
-        descInputLayout = findViewById(R.id.descInputLayout);
-        ingredientInputLayout = findViewById(R.id.ingredientInputLayout);
-        titleInput = findViewById(R.id.titleInput);
-        descInput = findViewById(R.id.descInput);
-        imageView = findViewById(R.id.recipeImageView);
-        ingredientInput = findViewById(R.id.ingredientInput);
-        ingredientsList = findViewById(R.id.ingredientsList);
-        deleteBtn = findViewById(R.id.deleteBtn);
-        chooseImageBtn = findViewById(R.id.chooseImageBtn);
-        saveBtn = findViewById(R.id.saveBtn);
-        addIngredientBtn = findViewById(R.id.addIngredientBtn);
-        categorySpinner = findViewById(R.id.categorySpinner);
-        vegetarianCheckbox = findViewById(R.id.vegetarianCheckbox);
-        veganCheckbox = findViewById(R.id.veganCheckbox);
-        glutenFreeCheckbox = findViewById(R.id.glutenFreeCheckbox);
-        meatCheckbox = findViewById(R.id.meatCheckbox);
-        gradientBackground = findViewById(R.id.dynamicGradientBackground);
+        binding = ActivityRecipeFormBinding.inflate(getLayoutInflater());
+        setContentView(binding.getRoot());
 
         ingredients = new ArrayList<>();
 
         String[] categories = {"Appetizers", "Main Course", "Desserts", "Beverages", "Salads", "Other"};
         ArrayAdapter<String> categoryAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, categories);
         categoryAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        categorySpinner.setAdapter(categoryAdapter);
+        binding.categorySpinner.setAdapter(categoryAdapter);
 
         // Set initial gradient
         applyGradient(currentStartColor, currentEndColor, false);
@@ -87,22 +61,22 @@ public class RecipeFormActivity extends AppCompatActivity {
         if (getIntent().hasExtra("position")) {
             editingPosition = getIntent().getIntExtra("position", -1);
             Recipe recipe = RecipeManager.recipes.get(editingPosition);
-            titleInput.setText(recipe.getTitle());
-            descInput.setText(recipe.getDescription());
+            binding.titleInput.setText(recipe.getTitle());
+            binding.descInput.setText(recipe.getDescription());
 
             if (recipe.getImageUri() != null && !recipe.getImageUri().isEmpty()) {
                 selectedImageUri = Uri.parse(recipe.getImageUri());
-                imageView.setImageURI(selectedImageUri);
+                binding.recipeImageView.setImageURI(selectedImageUri);
 
                 // Extract colors from the image and apply gradient
                 extractAndApplyColors(selectedImageUri);
             }
 
             // Set dietary filters
-            vegetarianCheckbox.setChecked(recipe.isVegetarian());
-            veganCheckbox.setChecked(recipe.isVegan());
-            glutenFreeCheckbox.setChecked(recipe.isGlutenFree());
-            meatCheckbox.setChecked(recipe.hasMeat());
+            binding.vegetarianCheckbox.setChecked(recipe.isVegetarian());
+            binding.veganCheckbox.setChecked(recipe.isVegan());
+            binding.glutenFreeCheckbox.setChecked(recipe.isGlutenFree());
+            binding.meatCheckbox.setChecked(recipe.hasMeat());
 
             // Set ingredients
             if (recipe.getIngredients() != null) {
@@ -115,29 +89,29 @@ public class RecipeFormActivity extends AppCompatActivity {
             if (currentCategory != null) {
                 int categoryPosition = Arrays.asList(categories).indexOf(currentCategory);
                 if (categoryPosition >= 0) {
-                    categorySpinner.setSelection(categoryPosition);
+                    binding.categorySpinner.setSelection(categoryPosition);
                 }
             }
 
             // Show delete button only when editing
-            deleteBtn.setVisibility(View.VISIBLE);
+            binding.deleteBtn.setVisibility(View.VISIBLE);
         } else {
             // Hide delete button when adding new recipe
-            deleteBtn.setVisibility(View.GONE);
+            binding.deleteBtn.setVisibility(View.GONE);
         }
 
-        addIngredientBtn.setOnClickListener(v -> {
-            String ingredient = ingredientInput.getText().toString().trim();
+        binding.addIngredientBtn.setOnClickListener(v -> {
+            String ingredient = binding.ingredientInput.getText().toString().trim();
             if (!ingredient.isEmpty()) {
                 ingredients.add(ingredient);
-                ingredientInput.setText("");
+                binding.ingredientInput.setText("");
                 displayIngredients();
             } else {
                 Toast.makeText(this, "Please enter an ingredient", Toast.LENGTH_SHORT).show();
             }
         });
 
-        chooseImageBtn.setOnClickListener(v -> {
+        binding.chooseImageBtn.setOnClickListener(v -> {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_MEDIA_IMAGES)
                     != PackageManager.PERMISSION_GRANTED) {
                 ActivityCompat.requestPermissions(this,
@@ -148,11 +122,11 @@ public class RecipeFormActivity extends AppCompatActivity {
             }
         });
 
-        saveBtn.setOnClickListener(v -> {
-            String title = titleInput.getText().toString().trim();
-            String desc = descInput.getText().toString().trim();
+        binding.saveBtn.setOnClickListener(v -> {
+            String title = binding.titleInput.getText().toString().trim();
+            String desc = binding.descInput.getText().toString().trim();
             String img = selectedImageUri != null ? selectedImageUri.toString() : null;
-            String category = categorySpinner.getSelectedItem().toString();
+            String category = binding.categorySpinner.getSelectedItem().toString();
 
             if (title.isEmpty()) {
                 Toast.makeText(this, "Please enter a recipe title", Toast.LENGTH_SHORT).show();
@@ -160,10 +134,10 @@ public class RecipeFormActivity extends AppCompatActivity {
             }
 
             Recipe r = new Recipe(title, desc, img, category, ingredients,
-                    vegetarianCheckbox.isChecked(),
-                    veganCheckbox.isChecked(),
-                    glutenFreeCheckbox.isChecked(),
-                    meatCheckbox.isChecked());
+                    binding.vegetarianCheckbox.isChecked(),
+                    binding.veganCheckbox.isChecked(),
+                    binding.glutenFreeCheckbox.isChecked(),
+                    binding.meatCheckbox.isChecked());
 
             if (editingPosition == -1)
                 RecipeManager.recipes.add(r);
@@ -174,7 +148,7 @@ public class RecipeFormActivity extends AppCompatActivity {
             finish();
         });
 
-        deleteBtn.setOnClickListener(v -> new AlertDialog.Builder(this)
+        binding.deleteBtn.setOnClickListener(v -> new AlertDialog.Builder(this)
                 .setTitle(getString(R.string.delete_confirmation_title))
                 .setMessage(getString(R.string.delete_confirmation_message))
                 .setPositiveButton(getString(R.string.delete), (dialog, which) -> {
@@ -202,47 +176,43 @@ public class RecipeFormActivity extends AppCompatActivity {
         int hintColor = adjustAlpha(textColor, 0.6f);
 
         // Apply to all text views
-        TextView categoryLabel = findViewById(R.id.categoryLabel);
-        TextView ingredientsLabel = findViewById(R.id.ingredientsLabel);
-        TextView dietaryLabel = findViewById(R.id.dietaryLabel);
-
-        if (categoryLabel != null) categoryLabel.setTextColor(textColor);
-        if (ingredientsLabel != null) ingredientsLabel.setTextColor(textColor);
-        if (dietaryLabel != null) dietaryLabel.setTextColor(textColor);
+        binding.categoryLabel.setTextColor(textColor);
+        binding.ingredientsLabel.setTextColor(textColor);
+        binding.dietaryLabel.setTextColor(textColor);
 
         // Apply to EditTexts
-        titleInput.setTextColor(textColor);
-        titleInput.setHintTextColor(hintColor);
-        descInput.setTextColor(textColor);
-        descInput.setHintTextColor(hintColor);
-        ingredientInput.setTextColor(textColor);
-        ingredientInput.setHintTextColor(hintColor);
+        binding.titleInput.setTextColor(textColor);
+        binding.titleInput.setHintTextColor(hintColor);
+        binding.descInput.setTextColor(textColor);
+        binding.descInput.setHintTextColor(hintColor);
+        binding.ingredientInput.setTextColor(textColor);
+        binding.ingredientInput.setHintTextColor(hintColor);
 
         // Apply to TextInputLayout borders and hints
-        updateTextInputLayoutColors(titleInputLayout, textColor, hintColor);
-        updateTextInputLayoutColors(descInputLayout, textColor, hintColor);
-        updateTextInputLayoutColors(ingredientInputLayout, textColor, hintColor);
+        updateTextInputLayoutColors(binding.titleInputLayout, textColor, hintColor);
+        updateTextInputLayoutColors(binding.descInputLayout, textColor, hintColor);
+        updateTextInputLayoutColors(binding.ingredientInputLayout, textColor, hintColor);
 
         // Apply to spinner (category dropdown)
-        updateSpinnerColors(categorySpinner, textColor, backgroundColor);
+        updateSpinnerColors(binding.categorySpinner, textColor, backgroundColor);
 
         // Apply to checkboxes (both text and checkbox color)
-        updateCheckBoxColors(vegetarianCheckbox, textColor);
-        updateCheckBoxColors(veganCheckbox, textColor);
-        updateCheckBoxColors(glutenFreeCheckbox, textColor);
-        updateCheckBoxColors(meatCheckbox, textColor);
+        updateCheckBoxColors(binding.vegetarianCheckbox, textColor);
+        updateCheckBoxColors(binding.veganCheckbox, textColor);
+        updateCheckBoxColors(binding.glutenFreeCheckbox, textColor);
+        updateCheckBoxColors(binding.meatCheckbox, textColor);
 
         // Apply to buttons
-        updateButtonColors(chooseImageBtn, textColor, backgroundColor);
-        updateButtonColors(addIngredientBtn, textColor, backgroundColor);
-        updateButtonColors(saveBtn, textColor, backgroundColor);
-        updateButtonColors(deleteBtn, textColor, backgroundColor);
+        updateButtonColors(binding.chooseImageBtn, textColor, backgroundColor);
+        updateButtonColors(binding.addIngredientBtn, textColor, backgroundColor);
+        updateButtonColors(binding.saveBtn, textColor, backgroundColor);
+        updateButtonColors(binding.deleteBtn, textColor, backgroundColor);
 
         // Apply to ingredients list
         updateIngredientsTextColor(textColor);
     }
 
-    private void updateTextInputLayoutColors(TextInputLayout layout, int textColor, int hintColor) {
+    private void updateTextInputLayoutColors(com.google.android.material.textfield.TextInputLayout layout, int textColor, int hintColor) {
         if (layout != null) {
             // Set box stroke color (border color)
             layout.setBoxStrokeColor(textColor);
@@ -338,12 +308,12 @@ public class RecipeFormActivity extends AppCompatActivity {
         }
     }
 
-    private void updateButtonColors(MaterialButton button, int textColor, int backgroundColor) {
+    private void updateButtonColors(com.google.android.material.button.MaterialButton button, int textColor, int backgroundColor) {
         if (button != null) {
             // Determine appropriate button colors
             boolean isDark = isColorDark(backgroundColor);
 
-            if (button == saveBtn) {
+            if (button == binding.saveBtn) {
                 // Save button: filled button with contrasting colors
                 button.setBackgroundTintList(ColorStateList.valueOf(textColor));
                 button.setTextColor(backgroundColor);
@@ -354,7 +324,7 @@ public class RecipeFormActivity extends AppCompatActivity {
                 button.setBackgroundTintList(ColorStateList.valueOf(Color.TRANSPARENT));
 
                 // Special color for delete button (keep it reddish if possible)
-                if (button == deleteBtn) {
+                if (button == binding.deleteBtn) {
                     int deleteColor = isDark ? 0xFFFF6B6B : 0xFFD32F2F;
                     button.setStrokeColor(ColorStateList.valueOf(deleteColor));
                     button.setTextColor(deleteColor);
@@ -384,8 +354,8 @@ public class RecipeFormActivity extends AppCompatActivity {
     }
 
     private void updateIngredientsTextColor(int textColor) {
-        for (int i = 0; i < ingredientsList.getChildCount(); i++) {
-            View child = ingredientsList.getChildAt(i);
+        for (int i = 0; i < binding.ingredientsList.getChildCount(); i++) {
+            View child = binding.ingredientsList.getChildAt(i);
             if (child instanceof LinearLayout) {
                 LinearLayout row = (LinearLayout) child;
                 if (row.getChildCount() > 0 && row.getChildAt(0) instanceof TextView) {
@@ -411,7 +381,7 @@ public class RecipeFormActivity extends AppCompatActivity {
             // Animate from current colors to new colors
             animateGradientChange(currentStartColor, currentEndColor, startColor, endColor);
         } else {
-            gradientBackground.setBackground(newGradient);
+            binding.dynamicGradientBackground.setBackground(newGradient);
         }
 
         currentStartColor = startColor;
@@ -434,14 +404,14 @@ public class RecipeFormActivity extends AppCompatActivity {
                     new int[]{currentStart, currentEnd}
             );
 
-            gradientBackground.setBackground(gradient);
+            binding.dynamicGradientBackground.setBackground(gradient);
         });
 
         animator.start();
     }
 
     private void displayIngredients() {
-        ingredientsList.removeAllViews();
+        binding.ingredientsList.removeAllViews();
 
         // Determine current text color based on background
         int textColor = isColorDark(currentStartColor) ? 0xFFFFFFFF : 0xFF000000;
@@ -476,7 +446,7 @@ public class RecipeFormActivity extends AppCompatActivity {
 
             ingredientRow.addView(ingredientText);
             ingredientRow.addView(removeBtn);
-            ingredientsList.addView(ingredientRow);
+            binding.ingredientsList.addView(ingredientRow);
         }
     }
 
@@ -491,7 +461,7 @@ public class RecipeFormActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == IMAGE_PICK_CODE && resultCode == Activity.RESULT_OK && data != null) {
             selectedImageUri = data.getData();
-            imageView.setImageURI(selectedImageUri);
+            binding.recipeImageView.setImageURI(selectedImageUri);
 
             // Extract colors and update gradient when new image is selected
             extractAndApplyColors(selectedImageUri);
